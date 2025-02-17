@@ -1,13 +1,17 @@
 #include "Utils/Log.h"
+#include "Application/App.h"
 
 int main()
 {
-	Px::Log{};  // Inits console
-
-
-	Px::Log::Info("Hello, {}!", "World");
-	Px::Log::Warn("Low disk space: {}%", 10);
-	Px::Log::Error("File not found: {}", "config.txt");
+	try
+	{
+		Px::App app;
+		app.Run();
+	}
+	catch (const std::exception& e)
+	{
+		Px::Log::Error("Exception thrown: {}", e.what());
+	}
 
 	return 0;
 }	

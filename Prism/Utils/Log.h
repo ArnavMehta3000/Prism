@@ -14,7 +14,7 @@ namespace Px
 		template<typename... Args>
 		static inline void Info(std::format_string<Args...> fmt, Args&&... args)
 		{
-			PrintLog(GREEN, "INFO", fmt, std::forward<Args>(args)...);
+			PrintLog(WHITE, "INFO", fmt, std::forward<Args>(args)...);
 		}
 
 		template<typename... Args>
@@ -47,12 +47,12 @@ namespace Px
 				tm_now.tm_sec);
 
 			std::println("{}{} [{}] [{}] {}{}",
-				color,                                         // Start color
-				BOLD,                                          // Make it bold
-				time_str,                                      // Timestamp
-				level,                                         // Log level
-				std::format(fmt, std::forward<Args>(args)...), // Message
-				RESET);                                        // Reset formatting
+				color,
+				BOLD,
+				time_str,
+				level,
+				std::format(fmt, std::forward<Args>(args)...),
+				RESET);
 		}
 
 	private:
