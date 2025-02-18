@@ -33,4 +33,6 @@ target("Prism")
 	add_files("**.cpp")
 	add_headerfiles("(Prism/**.h)", { install = true })
 	add_packages("Elos")
+
+	add_links("d3d11", "dxgi", "d3dcompiler")
 target_end()

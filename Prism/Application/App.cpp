@@ -20,8 +20,11 @@ namespace Px
 	void App::Init()
 	{
 		Log::Info("Initializting application");
-		
 		CreateMainWindow();
+		
+		
+		Log::Info("Initializting renderer");
+		m_renderer = std::make_unique<Gfx::Renderer>();
 	}
 	
 	void App::Shutdown()
@@ -49,9 +52,15 @@ namespace Px
 			m_window->Close();
 		};
 
+		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
+		{
+			Log::Info("Window resized: {0}x{1}", e.Size.Width, e.Size.Height);
+		};
+
 
 		m_window->HandleEvents(
-			OnWindowClosedEvent
+			OnWindowClosedEvent,
+			OnWindowResizedEvent
 		);
 	}
 }
