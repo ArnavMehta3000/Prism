@@ -1,6 +1,7 @@
 set_project("Prism")
 
 add_rules("mode.debug", "mode.release")
+add_rules("plugin.compile_commands.autoupdate", { outputdir = "build" })
 
 set_allowedmodes("debug", "release")
 set_defaultmode("debug")
@@ -11,7 +12,7 @@ set_policy("run.autobuild", true)
 
 if is_mode("debug") then
 	set_policy("preprocessor.linemarkers", true)
-	add_defines("PRSIM_BUILD_DEBUG=1")
+	add_defines("PRISM_BUILD_DEBUG=1")
 	set_symbols("debug", "edit")
 end
 
