@@ -1,3 +1,5 @@
 .xmake
+.cache
 build
 vsxmake*
+compile_commands.json
