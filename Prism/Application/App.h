@@ -9,7 +9,7 @@ namespace Px
 	{
 	public:
 		void Run();
-		
+
 	private:
 		void Init();
 		void Shutdown();

@@ -11,15 +11,11 @@ namespace Elos
 
 namespace Px::Gfx
 {
-	namespace Core
-	{
-		class Device;
-	}
-
 	class Renderer
 	{
 	public:
 		Renderer(Elos::Window& window);
+		void Resize(u32 width, u32 height);
 
 	private:
 		void CreateDevice(Elos::Window& window);
@@ -29,5 +25,5 @@ namespace Px::Gfx
 		Elos::Window& m_window;
 		std::unique_ptr<Core::Device> m_device;
 		std::unique_ptr<Core::SwapChain> m_swapChain;
-	};		
+	};
 }

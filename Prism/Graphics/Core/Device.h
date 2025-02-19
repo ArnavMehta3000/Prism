@@ -25,7 +25,6 @@ namespace Px::Gfx::Core
 		struct DeviceDesc
 		{
 			bool EnableDebugLayer             = false;
-			bool EnableGPUValidation          = false;
 			u32 PreferredAdapter              = 0;
 			D3D_FEATURE_LEVEL MinFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 		};
@@ -48,7 +47,7 @@ namespace Px::Gfx::Core
 		};
 
 		NODISCARD static std::expected<std::unique_ptr<Device>, DeviceError> Create(const DeviceDesc& desc = DeviceDesc{}) noexcept;
-		~Device() noexcept = default;
+		~Device() noexcept;
 
 		NODISCARD bool SupportsFeatureLevel(D3D_FEATURE_LEVEL level) const noexcept;
 
@@ -68,13 +67,16 @@ namespace Px::Gfx::Core
 		NODISCARD inline DX11::IDevice*                     GetDevice() const noexcept                 { return m_d3dDevice.Get();        }
 		NODISCARD inline DX11::IDeviceContext*              GetContext() const noexcept                { return m_d3dContext.Get();       }
 		NODISCARD inline DX11::IFactory*                    GetFactory() const noexcept                { return m_dxgiFactory.Get();      }
-	
+
+		void ReportLiveObjects() const noexcept;
+
 	private:
 		Device() noexcept = default;
 
 		NODISCARD std::expected<void, DeviceError> InitializeFactory(bool enableDebugLayer) noexcept;
 		NODISCARD std::expected<void, DeviceError> InitializeAdapter(uint32_t preferredAdapter) noexcept;
-		NODISCARD std::expected<void, DeviceError> InitializeDevice(const DeviceDesc& desc, bool enableDebugLayer, bool enableGPUValidation) noexcept;
+		NODISCARD std::expected<void, DeviceError> InitializeDevice(const DeviceDesc& desc) noexcept;
+		void SetupDebugLayer(u32 creationFlags);
 
 	private:
 		ComPtr<DX11::IFactory>         m_dxgiFactory;

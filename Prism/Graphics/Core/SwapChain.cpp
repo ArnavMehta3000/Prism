@@ -15,7 +15,7 @@ namespace Px::Gfx::Core
 
 		return swapChain;
 	}
-	
+
 	SwapChain::SwapChain(Device& device) noexcept : m_device(device) {}
 
 	std::expected<void, SwapChain::SwapChainError> SwapChain::Present() noexcept
@@ -29,7 +29,7 @@ namespace Px::Gfx::Core
 		}
 
 		HRESULT hr = m_swapChain->Present(syncInterval, presentFlags);
-		if (FAILED(hr)) 
+		if (FAILED(hr))
 		{
 			return std::unexpected(SwapChainError
 			{
@@ -39,13 +39,12 @@ namespace Px::Gfx::Core
 			});
 		}
 
-		m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 		return {};
 	}
-	
+
 	std::expected<void, SwapChain::SwapChainError> SwapChain::Resize(u32 width, u32 height) noexcept
 	{
-		if (width == 0 || height == 0) 
+		if (width == 0 || height == 0)
 		{
 			return std::unexpected(SwapChainError
 			{
@@ -55,11 +54,7 @@ namespace Px::Gfx::Core
 			});
 		}
 
-		// Release existing RTVs
-		for (auto& rtv : m_renderTargets)
-		{
-			rtv.Reset();
-		}
+		m_backBufferRTV.Reset();
 
 		HRESULT hr = m_swapChain->ResizeBuffers(
 			m_desc.BufferCount,
@@ -83,13 +78,7 @@ namespace Px::Gfx::Core
 
 		return CreateRenderTargetViews();
 	}
-	
-	DX11::IRenderTarget* SwapChain::GetCurrentRTV() const noexcept
-	{
-		return m_renderTargets[m_currentBackBufferIndex].Get();
 
-	}
-	
 	std::expected<void, SwapChain::SwapChainError> SwapChain::Initialize(const SwapChainDesc& desc) noexcept
 	{
 		if (!desc.WindowHandle || desc.Width == 0 || desc.Height == 0)
@@ -114,7 +103,7 @@ namespace Px::Gfx::Core
 		swapChainDesc.BufferUsage           = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapChainDesc.BufferCount           = desc.BufferCount;
 		swapChainDesc.Scaling               = DXGI_SCALING_STRETCH;
-		swapChainDesc.SwapEffect            = DXGI_SWAP_EFFECT_DISCARD;
+		swapChainDesc.SwapEffect            = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapChainDesc.AlphaMode             = DXGI_ALPHA_MODE_UNSPECIFIED;
 		swapChainDesc.Flags                 = m_hasTearingSupport && desc.AllowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
@@ -135,7 +124,7 @@ namespace Px::Gfx::Core
 			&swapChain1
 		);
 
-		if (FAILED(hr)) 
+		if (FAILED(hr))
 		{
 			return std::unexpected(SwapChainError
 			{
@@ -146,7 +135,7 @@ namespace Px::Gfx::Core
 		}
 
 		hr = swapChain1.As(&m_swapChain);
-		if (FAILED(hr)) 
+		if (FAILED(hr))
 		{
 			return std::unexpected(SwapChainError
 			{
@@ -156,69 +145,60 @@ namespace Px::Gfx::Core
 			});
 		}
 
-		if (auto result = CreateRenderTargetViews(); !result) 
+		if (auto result = CreateRenderTargetViews(); !result)
 		{
 			return std::unexpected(result.error());
 		}
 
 		return {};
 	}
-	
+
 	std::expected<void, SwapChain::SwapChainError> SwapChain::CreateRenderTargetViews() noexcept
 	{
-		std::vector<ComPtr<ID3D11RenderTargetView>> renderTargetViews(m_desc.BufferCount);
+		ComPtr<ID3D11Texture2D> backBuffer;
+		ComPtr<ID3D11RenderTargetView> renderTargetView;
+		HRESULT hr = m_swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
 
-		for (uint32_t i = 0; i < m_desc.BufferCount; ++i)
+		if (FAILED(hr))
 		{
-			ComPtr<ID3D11Texture2D> backBuffer;
-			HRESULT hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
-
-			if (FAILED(hr)) 
+			return std::unexpected(SwapChainError
 			{
-				return std::unexpected(SwapChainError
-				{
-					.Type      = SwapChainError::Type::GetBufferFailed,
-					.ErrorCode = hr,
-					.Message   = "Failed to get swap chain buffer"
-				});
-			}
-
-			hr = m_device.GetDevice()->CreateRenderTargetView(
-				backBuffer.Get(),
-				nullptr,
-				&renderTargetViews[i]
-			);
-
-			if (FAILED(hr)) 
-			{
-				return std::unexpected(SwapChainError
-				{
-					.Type      = SwapChainError::Type::CreateRTVFailed,
-					.ErrorCode = hr,
-					.Message   = "Failed to create render target view"
-				});
-			}
+				.Type      = SwapChainError::Type::GetBufferFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to get swap chain buffer"
+			});
 		}
 
-		// Upgrade all render targets
-		m_renderTargets.resize(m_desc.BufferCount);
-		for (u32 i = 0; i < m_desc.BufferCount; ++i)
+		hr = m_device.GetDevice()->CreateRenderTargetView(
+			backBuffer.Get(),
+			nullptr,
+			&renderTargetView
+		);
+
+		if (FAILED(hr))
 		{
-			HRESULT hr = renderTargetViews[i].As(&m_renderTargets[i]);
-			if (FAILED(hr))
+			return std::unexpected(SwapChainError
 			{
-				return std::unexpected(SwapChainError
-				{
-					.Type = SwapChainError::Type::CreateRTVFailed,
-					.ErrorCode = hr,
-					.Message = "Failed to upgrade render target view"
-				});
-			}
+				.Type      = SwapChainError::Type::CreateRTVFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to create render target view"
+			});
+		}
+
+		hr = renderTargetView.As(&m_backBufferRTV);
+		if (FAILED(hr))
+		{
+			return std::unexpected(SwapChainError
+			{
+				.Type = SwapChainError::Type::CreateRTVFailed,
+				.ErrorCode = hr,
+				.Message = "Failed to upgrade render target view"
+			});
 		}
 
 		return {};
 	}
-	
+
 	bool SwapChain::CheckTearingSupport() noexcept
 	{
 		BOOL allowTearing = FALSE;

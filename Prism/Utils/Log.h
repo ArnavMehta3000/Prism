@@ -7,9 +7,8 @@ namespace Px
 {
 	class Log
 	{
-
 	public:
-		Log();
+		static void Init();
 
 		template<typename... Args>
 		static inline void Info(std::format_string<Args...> fmt, Args&&... args)

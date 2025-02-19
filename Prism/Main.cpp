@@ -5,6 +5,7 @@ int main()
 {
 	try
 	{
+		Px::Log::Init();
 		Px::App app;
 		app.Run();
 	}
@@ -14,4 +15,4 @@ int main()
 	}
 
 	return 0;
-}	
+}

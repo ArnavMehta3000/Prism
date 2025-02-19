@@ -16,17 +16,17 @@ namespace Px
 
 		Shutdown();
 	}
-	
+
 	void App::Init()
 	{
 		Log::Info("Initializting application");
 		CreateMainWindow();
-		
-		
+
+
 		Log::Info("Initializting renderer");
 		m_renderer = std::make_unique<Gfx::Renderer>(*m_window);
 	}
-	
+
 	void App::Shutdown()
 	{
 		Log::Info("Shutting down application");
@@ -36,7 +36,7 @@ namespace Px
 	{
 		m_window = std::make_unique<Elos::Window>(
 			Elos::WindowCreateInfo::Default("Prism", { 1280, 720 }));
-		
+
 		Elos::ASSERT(m_window && m_window->GetHandle())
 			.Msg("Failed to create window")
 			.Throw();
@@ -44,7 +44,7 @@ namespace Px
 		Elos::WindowExtensions::EnableDarkMode(m_window->GetHandle(), true);
 
 	}
-	
+
 	void App::ProcessWindowEvents()
 	{
 		const auto OnWindowClosedEvent = [this](const Elos::Event::Closed&)
@@ -55,6 +55,7 @@ namespace Px
 		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
 		{
 			Log::Info("Window resized: {0}x{1}", e.Size.Width, e.Size.Height);
+			m_renderer->Resize(e.Size.Width, e.Size.Height);
 		};
 
 

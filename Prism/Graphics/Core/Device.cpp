@@ -1,6 +1,8 @@
 #include "Graphics/Core/Device.h"
+#include "Utils/Log.h"
 #include <Elos/Common/Assert.h>
 #include <array>
+#include <dxgidebug.h>
 
 namespace Px::Gfx::Core
 {
@@ -18,7 +20,7 @@ namespace Px::Gfx::Core
 			return std::unexpected(result.error());
 		}
 
-		if (auto result = device->InitializeDevice(desc, desc.EnableDebugLayer, desc.EnableGPUValidation); !result)
+		if (auto result = device->InitializeDevice(desc); !result)
 		{
 			return std::unexpected(result.error());
 		}
@@ -26,21 +28,26 @@ namespace Px::Gfx::Core
 		return device;
 	}
 
+	Device::~Device() noexcept
+	{
+		ReportLiveObjects();
+	}
+
 	bool Device::SupportsFeatureLevel(D3D_FEATURE_LEVEL level) const noexcept
 	{
 		return std::find(m_supportedFeatureLevels.begin(), m_supportedFeatureLevels.end(), level) != m_supportedFeatureLevels.end();
 	}
-	
+
 	std::expected<ComPtr<DX11::IBuffer>, HRESULT> Device::CreateBuffer(const D3D11_BUFFER_DESC& desc, const D3D11_SUBRESOURCE_DATA* initialData) const noexcept
 	{
 		return std::unexpected(E_FAIL);
 	}
-	
+
 	std::expected<ComPtr<DX11::ITexture2D>, HRESULT> Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC& desc, const D3D11_SUBRESOURCE_DATA* initialData) const noexcept
 	{
 		return std::unexpected(E_FAIL);
 	}
-	
+
 	std::expected<ComPtr<DX11::IRenderTarget>, HRESULT> Device::CreateRenderTargetView(ID3D11Resource* resource, const D3D11_RENDER_TARGET_VIEW_DESC* desc) const noexcept
 	{
 		return std::unexpected(E_FAIL);
@@ -80,13 +87,44 @@ namespace Px::Gfx::Core
 	{
 		return std::unexpected(E_FAIL);
 	}
-	
+
+	void Device::ReportLiveObjects() const noexcept
+	{
+		if (m_d3dDevice)
+		{
+			ComPtr<ID3D11Debug> debug;
+			if (SUCCEEDED(m_d3dDevice.As(&debug)))
+			{
+				Log::Warn("Reporting D3D live device objects");
+				debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL | D3D11_RLDO_SUMMARY);
+			}
+		}
+
+		if (m_dxgiFactory)
+		{
+			ComPtr<IDXGIDebug1> debug;
+			if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug))))
+			{
+				Log::Warn("Reporting DXGI live device objects");
+				debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(
+					DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+			}
+		}
+	}
+
 	std::expected<void, Device::DeviceError> Device::InitializeFactory(bool enableDebugLayer) noexcept
 	{
-		u32 factoryFlags = 0;		
+		u32 factoryFlags = 0;
 		if (enableDebugLayer)
 		{
 			factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+		}
+
+		ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+		if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+		{
+			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
+			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 		}
 
 		HRESULT hr = ::CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&m_dxgiFactory));
@@ -103,7 +141,7 @@ namespace Px::Gfx::Core
 
 		return {};
 	}
-	
+
 	std::expected<void, Device::DeviceError> Device::InitializeAdapter(uint32_t preferredAdapter) noexcept
 	{
 		Elos::ASSERT(m_dxgiFactory).Msg("DXGI factory is not initialized").Throw();
@@ -145,7 +183,7 @@ namespace Px::Gfx::Core
 		}
 
 		m_dxgiAdapter.Attach(preferredAdapter < adapters.size() ? adapters[preferredAdapter].Detach() : adapters[0].Detach());
-		
+
 		DXGI_ADAPTER_DESC3 desc;
 		m_dxgiAdapter->GetDesc3(&desc);
 		m_adapterInfo.Description           = Elos::WStringToString(desc.Description);
@@ -156,15 +194,13 @@ namespace Px::Gfx::Core
 
 		return {};
 	}
-	
-	std::expected<void, Device::DeviceError> Device::InitializeDevice(const DeviceDesc& desc, bool enableDebugLayer, bool enableGPUValidation) noexcept
+
+	std::expected<void, Device::DeviceError> Device::InitializeDevice(const DeviceDesc& desc) noexcept
 	{
 		constexpr std::array featureLevels{ D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
 
 		u32 deviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-		deviceFlags |= enableDebugLayer 
-			? (enableDebugLayer && enableGPUValidation) 
-			? D3D11_CREATE_DEVICE_DEBUGGABLE : D3D11_CREATE_DEVICE_DEBUG : 0;
+		deviceFlags |= desc.EnableDebugLayer ? D3D11_CREATE_DEVICE_DEBUG : 0;
 
 		ComPtr<ID3D11Device> baseDevice;
 		ComPtr<ID3D11DeviceContext> baseContext;
@@ -220,6 +256,34 @@ namespace Px::Gfx::Core
 				});
 		}
 
+		SetupDebugLayer(deviceFlags);
+
 		return {};
+	}
+
+	void Device::SetupDebugLayer(u32 creationFlags)
+	{
+		ComPtr<ID3D11Debug> debug;
+		if (SUCCEEDED(m_d3dDevice.As(&debug)))
+		{
+			ComPtr<ID3D11InfoQueue> infoQueue;
+			if (SUCCEEDED(debug.As(&infoQueue)))
+			{
+#if PRISM_BUILD_DEBUG
+				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+#endif
+				std::array hide =
+		        {
+			        D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
+		        };
+
+				D3D11_INFO_QUEUE_FILTER filter = {};
+				filter.DenyList.NumIDs = hide.size();
+				filter.DenyList.pIDList = hide.data();
+
+				infoQueue->AddStorageFilterEntries(&filter);
+			}
+		}
 	}
 }

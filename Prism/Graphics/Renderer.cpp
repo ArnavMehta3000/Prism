@@ -1,4 +1,4 @@
-#include "Graphics/Renderer.h"
+#include "Renderer.h"
 #include "Utils/Log.h"
 #include <Elos/Common/Assert.h>
 #include <Elos/Window/Window.h>
@@ -14,9 +14,9 @@ namespace Px::Gfx
 			Px::Log::Info("Adapter Device: {}"                         , adapterInfo.DxgiDesc.DeviceId);
 			Px::Log::Info("Adapter Subsystem: {}"                      , adapterInfo.DxgiDesc.SubSysId);
 			Px::Log::Info("Adapter Revision: {}"                       , adapterInfo.DxgiDesc.Revision);
-			Px::Log::Info("Adapter Dedicated Video Memory(GB): {:.3f}" , static_cast<Px::f32>(adapterInfo.DedicatedVideoMemory) / 1024 / 1024 / 1024);
-			Px::Log::Info("Adapter Shared System Memory(GB): {:.3f}"   , static_cast<Px::f32>(adapterInfo.SharedSystemMemory) / 1024 / 1024 / 1024);
-			Px::Log::Info("Adapter Dedicated System Memory(GB): {:.3f}", static_cast<Px::f32>(adapterInfo.DedicatedSystemMemory) / 1024 / 1024 / 1024);
+			Px::Log::Info("Adapter Dedicated Video Memory(GB): {:.3f}" , static_cast<f32>(adapterInfo.DedicatedVideoMemory) / 1024 / 1024 / 1024);
+			Px::Log::Info("Adapter Shared System Memory(GB): {:.3f}"   , static_cast<f32>(adapterInfo.SharedSystemMemory) / 1024 / 1024 / 1024);
+			Px::Log::Info("Adapter Dedicated System Memory(GB): {:.3f}", static_cast<f32>(adapterInfo.DedicatedSystemMemory) / 1024 / 1024 / 1024);
 		}
 	}
 
@@ -25,6 +25,24 @@ namespace Px::Gfx
 	{
 		CreateDevice(window);
 		CreateSwapChain(window);
+
+		Log::Info("Created Renderer");
+	}
+
+	void Renderer::Resize(u32 width, u32 height)
+	{
+		if (m_swapChain)
+		{
+			// Only check for resize failure in debug builds
+#if PRISM_BUILD_DEBUG
+			if (auto result = m_swapChain->Resize(width, height); !result)
+			{
+				Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("Failed to resize DXGI Swap Chain! (Error Code: {:#x})", result.error().ErrorCode).Throw();
+			}
+#else
+			std::ignore = m_swapChain->Resize(width, height);
+#endif
+		}
 	}
 
 	void Renderer::CreateDevice(MAYBE_UNUSED Elos::Window& window)
@@ -32,10 +50,9 @@ namespace Px::Gfx
 		if (auto result = Core::Device::Create(Core::Device::DeviceDesc
 			{
 				.EnableDebugLayer = true,
-				.EnableGPUValidation = false
 			}); !result)
 		{
-			Elos::ASSERT(false).Msg("{}", result.error().Message).Throw();
+			Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("{} (Error Code: {:#x})", result.error().Message, result.error().ErrorCode).Throw();
 			return;
 		}
 		else
@@ -44,6 +61,7 @@ namespace Px::Gfx
 		}
 
 		Internal::LogAdapterInfo(m_device->GetAdapterInfo());
+		Log::Info("Created DX11 Device");
 	}
 
 	void Renderer::CreateSwapChain(Elos::Window& window)
@@ -55,18 +73,19 @@ namespace Px::Gfx
 				.WindowHandle = window.GetHandle(),
 				.Width        = windowSize.Width,
 				.Height       = windowSize.Height,
-				.BufferCount  = 1,
+				.BufferCount  = 2,
 				.Format       = DXGI_FORMAT_R8G8B8A8_UNORM,
 				.AllowTearing = true,
 				.Fullscreen   = false
 			}); !result)
 		{
-			Elos::ASSERT(false).Msg("{}", result.error().Message).Throw();
+			Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("{} (Error Code: {:#x})", result.error().Message, result.error().ErrorCode).Throw();
 			return;
 		}
 		else
 		{
 			m_swapChain = std::move(result.value());
+			Log::Info("Created DX11 Swap Chain");
 		}
 	}
 }

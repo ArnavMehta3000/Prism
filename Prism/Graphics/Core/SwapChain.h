@@ -3,7 +3,7 @@
 #include "Graphics/DX11Types.h"
 #include <Elos/Common/String.h>
 #include <Elos/Common/FunctionMacros.h>
-#include <Elos/Window/WindowHandle.h>	
+#include <Elos/Window/WindowHandle.h>
 #include <vector>
 #include <expected>
 #include <memory>
@@ -28,7 +28,7 @@ namespace Px::Gfx::Core
 			bool AllowTearing               = true;
 			bool Fullscreen                 = false;
 		};
-		
+
 		struct SwapChainError
 		{
 			enum class Type
@@ -52,23 +52,21 @@ namespace Px::Gfx::Core
 		std::expected<void, SwapChainError> Present() noexcept;
 		std::expected<void, SwapChainError> Resize(u32 width, u32 height) noexcept;
 
-		NODISCARD DX11::IRenderTarget* GetCurrentRTV() const noexcept;
-		NODISCARD inline uint32_t GetCurrentBackBufferIndex() const noexcept { return m_currentBackBufferIndex; }
+		NODISCARD DX11::IRenderTarget* GetBackBufferRTV() const noexcept { return m_backBufferRTV.Get(); };
 		NODISCARD inline const SwapChainDesc& GetDesc() const noexcept { return m_desc; }
 		NODISCARD inline bool IsTearingSupported() const noexcept { return m_hasTearingSupport; }
 	private:
 		SwapChain(Device& device) noexcept;
-		
+
 		NODISCARD std::expected<void, SwapChainError> Initialize(const SwapChainDesc& desc) noexcept;
 		NODISCARD std::expected<void, SwapChainError> CreateRenderTargetViews() noexcept;
 		NODISCARD bool CheckTearingSupport() noexcept;
 
 	private:
-		Device&                                  m_device;
-		ComPtr<DX11::ISwapChain>                 m_swapChain;
-		std::vector<ComPtr<DX11::IRenderTarget>> m_renderTargets;
-		SwapChainDesc                            m_desc;
-		u32                                      m_currentBackBufferIndex = 0;
-		bool                                     m_hasTearingSupport = false;
+		Device&                     m_device;
+		ComPtr<DX11::ISwapChain>    m_swapChain;
+		ComPtr<DX11::IRenderTarget> m_backBufferRTV;
+		SwapChainDesc               m_desc;
+		bool                        m_hasTearingSupport = false;
 	};
 }
