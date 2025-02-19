@@ -24,7 +24,7 @@ namespace Px
 		
 		
 		Log::Info("Initializting renderer");
-		m_renderer = std::make_unique<Gfx::Renderer>();
+		m_renderer = std::make_unique<Gfx::Renderer>(*m_window);
 	}
 	
 	void App::Shutdown()
