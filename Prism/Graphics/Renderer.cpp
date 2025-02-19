@@ -29,6 +29,12 @@ namespace Px::Gfx
 		Log::Info("Created Renderer");
 	}
 
+	Renderer::~Renderer()
+	{
+		m_swapChain.reset();
+		m_device.reset();
+	}
+
 	void Renderer::Resize(u32 width, u32 height)
 	{
 		if (m_swapChain)

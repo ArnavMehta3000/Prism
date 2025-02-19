@@ -76,7 +76,7 @@ namespace Px::Gfx::Core
 		NODISCARD std::expected<void, DeviceError> InitializeFactory(bool enableDebugLayer) noexcept;
 		NODISCARD std::expected<void, DeviceError> InitializeAdapter(uint32_t preferredAdapter) noexcept;
 		NODISCARD std::expected<void, DeviceError> InitializeDevice(const DeviceDesc& desc) noexcept;
-		void SetupDebugLayer(u32 creationFlags);
+		void SetupDebugLayer();
 
 	private:
 		ComPtr<DX11::IFactory>         m_dxgiFactory;

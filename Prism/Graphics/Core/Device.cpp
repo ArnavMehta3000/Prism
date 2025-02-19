@@ -1,4 +1,5 @@
 #include "Graphics/Core/Device.h"
+#include "Graphics/Utils/DebugName.h"
 #include "Utils/Log.h"
 #include <Elos/Common/Assert.h>
 #include <array>
@@ -100,6 +101,9 @@ namespace Px::Gfx::Core
 			}
 		}
 
+		// Manually add a space to help in differentiating
+		OutputDebugStringA("");
+
 		if (m_dxgiFactory)
 		{
 			ComPtr<IDXGIDebug1> debug;
@@ -138,6 +142,8 @@ namespace Px::Gfx::Core
 					.Message   = "Failed to create DXGI factory"
 				});
 		}
+
+		SetDebugObjectName(m_dxgiFactory, "DXGIFactory");
 
 		return {};
 	}
@@ -191,6 +197,8 @@ namespace Px::Gfx::Core
 		m_adapterInfo.DedicatedSystemMemory = desc.DedicatedSystemMemory;
 		m_adapterInfo.SharedSystemMemory    = desc.SharedSystemMemory;
 		m_adapterInfo.DxgiDesc              = desc;
+
+		SetDebugObjectName(m_dxgiAdapter, "DXGIAdapter");
 
 		return {};
 	}
@@ -256,12 +264,15 @@ namespace Px::Gfx::Core
 				});
 		}
 
-		SetupDebugLayer(deviceFlags);
+		SetDebugObjectName(m_d3dDevice, "DX11Device");
+		SetDebugObjectName(m_d3dContext, "DX11ImmediateContext");
+
+		SetupDebugLayer();
 
 		return {};
 	}
 
-	void Device::SetupDebugLayer(u32 creationFlags)
+	void Device::SetupDebugLayer()
 	{
 		ComPtr<ID3D11Debug> debug;
 		if (SUCCEEDED(m_d3dDevice.As(&debug)))

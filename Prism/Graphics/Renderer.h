@@ -15,6 +15,7 @@ namespace Px::Gfx
 	{
 	public:
 		Renderer(Elos::Window& window);
+		~Renderer();
 		void Resize(u32 width, u32 height);
 
 	private:
