@@ -13,6 +13,7 @@ namespace Px
 	private:
 		void Init();
 		void Shutdown();
+		void Tick();
 
 		void CreateMainWindow();
 		void ProcessWindowEvents();

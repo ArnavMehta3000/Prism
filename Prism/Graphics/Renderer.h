@@ -16,7 +16,12 @@ namespace Px::Gfx
 	public:
 		Renderer(Elos::Window& window);
 		~Renderer();
+
+		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
+		NODISCARD inline Core::SwapChain* GetSwapChain() const noexcept { return m_swapChain.get(); }
+
 		void Resize(u32 width, u32 height);
+		void Present();
 
 	private:
 		void CreateDevice(Elos::Window& window);

@@ -2,6 +2,7 @@
 #include "Utils/Log.h"
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
+#include <array>
 
 namespace Px
 {
@@ -9,10 +10,14 @@ namespace Px
 	{
 		Init();
 
+		Log::Info("Starting App");
+
 		while (m_window->IsOpen())
 		{
 			ProcessWindowEvents();
+			Tick();
 		}
+		Log::Info("Stopping App");
 
 		Shutdown();
 	}
@@ -29,9 +34,23 @@ namespace Px
 
 	void App::Shutdown()
 	{
-		Log::Info("Shutting down application");
 		m_renderer.reset();
 		m_window.reset();
+	}
+
+	void App::Tick()
+	{
+		if (m_renderer)
+		{
+			// Clear back buffer
+			auto context = m_renderer->GetDevice()->GetContext();
+			auto backBufferRTV = m_renderer->GetSwapChain()->GetBackBufferRTV();
+			std::array clearColor = { 1.0f, 0.0f, 0.0f, 1.0f} ;
+
+			context->ClearRenderTargetView(backBufferRTV, clearColor.data());
+
+			m_renderer->Present();
+		}
 	}
 
 	void App::CreateMainWindow()
@@ -44,7 +63,7 @@ namespace Px
 			.Throw();
 
 		Elos::WindowExtensions::EnableDarkMode(m_window->GetHandle(), true);
-
+		m_window->SetMinimumSize({ 600, 400 });
 	}
 
 	void App::ProcessWindowEvents()
@@ -54,16 +73,29 @@ namespace Px
 			m_window->Close();
 		};
 
+		const auto OnWindowKeyReleased  = [this](const Elos::Event::KeyPressed& e)
+		{
+			if (e.Key == Elos::KeyCode::Escape)
+			{
+				Log::Info("Escape pressed...Closing window");
+				m_window->Close();
+			}
+		};
+
 		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
 		{
 			Log::Info("Window resized: {0}x{1}", e.Size.Width, e.Size.Height);
-			m_renderer->Resize(e.Size.Width, e.Size.Height);
+			if (m_renderer)
+			{
+				m_renderer->Resize(e.Size.Width, e.Size.Height);
+			}
 		};
 
 
 		m_window->HandleEvents(
 			OnWindowClosedEvent,
-			OnWindowResizedEvent
+			OnWindowResizedEvent,
+			OnWindowKeyReleased
 		);
 	}
 }

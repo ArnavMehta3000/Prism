@@ -38,6 +38,11 @@ namespace Px::Gfx
 
 	void Renderer::Resize(u32 width, u32 height)
 	{
+		if (width == 0 || height == 0)
+		{
+			return;  // We cannot resize
+		}
+
 		if (m_swapChain)
 		{
 			// Only check for resize failure in debug builds
@@ -48,6 +53,22 @@ namespace Px::Gfx
 			}
 #else
 			std::ignore = m_swapChain->Resize(width, height);
+#endif
+		}
+	}
+
+	void Renderer::Present()
+	{
+		if (m_swapChain)
+		{
+			// Only check for resize failure in debug builds
+#if PRISM_BUILD_DEBUG
+			if (auto result = m_swapChain->Present(); !result)
+			{
+				Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("Failed to present DXGI Swap Chain! (Error Code: {:#x})", result.error().ErrorCode).Throw();
+			}
+#else
+			std::ignore = m_swapChain->Present();
 #endif
 		}
 	}
