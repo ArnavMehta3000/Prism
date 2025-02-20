@@ -68,7 +68,8 @@ namespace Px::Gfx::Core
 		NODISCARD inline DX11::IDeviceContext*              GetContext() const noexcept                { return m_d3dContext.Get();       }
 		NODISCARD inline DX11::IFactory*                    GetFactory() const noexcept                { return m_dxgiFactory.Get();      }
 
-		void ReportLiveObjects() const noexcept;
+		// Passing true here means this function will reset the device and factory
+		void ReportLiveObjects(bool resetObjs = false) noexcept;
 
 	private:
 		Device() noexcept = default;

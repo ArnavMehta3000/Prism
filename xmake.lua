@@ -12,7 +12,7 @@ set_policy("run.autobuild", true)
 
 if is_mode("debug") then
 	set_policy("preprocessor.linemarkers", true)
-	add_defines("PRISM_BUILD_DEBUG=1")
+	add_defines("PRISM_BUILD_DEBUG=1", "_DEBUG")
 	set_symbols("debug", "edit")
 end
 

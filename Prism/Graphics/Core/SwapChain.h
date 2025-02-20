@@ -47,7 +47,7 @@ namespace Px::Gfx::Core
 		};
 
 		NODISCARD static std::expected<std::unique_ptr<SwapChain>, SwapChainError> Create(Device& device, const SwapChainDesc& desc) noexcept;
-		~SwapChain() noexcept = default;
+		~SwapChain() noexcept;
 
 		std::expected<void, SwapChainError> Present() noexcept;
 		std::expected<void, SwapChainError> Resize(u32 width, u32 height) noexcept;

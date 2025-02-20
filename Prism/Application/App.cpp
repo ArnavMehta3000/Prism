@@ -30,6 +30,8 @@ namespace Px
 	void App::Shutdown()
 	{
 		Log::Info("Shutting down application");
+		m_renderer.reset();
+		m_window.reset();
 	}
 
 	void App::CreateMainWindow()

@@ -18,6 +18,17 @@ namespace Px::Gfx::Core
 
 	SwapChain::SwapChain(Device& device) noexcept : m_device(device) {}
 
+	SwapChain::~SwapChain() noexcept
+	{
+		if (m_swapChain && !m_desc.Fullscreen)
+	    {
+	        m_swapChain->SetFullscreenState(FALSE, nullptr);
+	    }
+
+		m_backBufferRTV.Reset();
+		m_swapChain.Reset();
+	}
+
 	std::expected<void, SwapChain::SwapChainError> SwapChain::Present() noexcept
 	{
 		u32 syncInterval = m_desc.SyncInterval;
@@ -133,17 +144,18 @@ namespace Px::Gfx::Core
 				.Message   = "Failed to create swap chain"
 			});
 		}
-
-		hr = swapChain1.As(&m_swapChain);
-		if (FAILED(hr))
-		{
-			return std::unexpected(SwapChainError
+		else
+	    {
+	        if (FAILED(swapChain1.As(&m_swapChain)))
 			{
-				.Type      = SwapChainError::Type::CreateSwapChainFailed,
-				.ErrorCode = hr,
-				.Message   = "Failed to get IDXGISwapChain4 interface"
-			});
-		}
+				return std::unexpected(SwapChainError
+				{
+					.Type      = SwapChainError::Type::CreateSwapChainFailed,
+					.ErrorCode = hr,
+					.Message   = "Failed to get IDXGISwapChain4 interface"
+				});
+			}
+	    }
 
 		if (auto result = CreateRenderTargetViews(); !result)
 		{

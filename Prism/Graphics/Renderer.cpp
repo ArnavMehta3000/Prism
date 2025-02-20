@@ -31,6 +31,7 @@ namespace Px::Gfx
 
 	Renderer::~Renderer()
 	{
+		Log::Info("Shutting down Renderer");
 		m_swapChain.reset();
 		m_device.reset();
 	}

@@ -31,7 +31,13 @@ namespace Px::Gfx::Core
 
 	Device::~Device() noexcept
 	{
-		ReportLiveObjects();
+		m_d3dContext->ClearState();  // Flush any pending states
+		m_d3dContext->Flush();
+
+		m_d3dContext.Reset();
+		m_dxgiAdapter.Reset();
+
+		ReportLiveObjects(true);
 	}
 
 	bool Device::SupportsFeatureLevel(D3D_FEATURE_LEVEL level) const noexcept
@@ -89,29 +95,40 @@ namespace Px::Gfx::Core
 		return std::unexpected(E_FAIL);
 	}
 
-	void Device::ReportLiveObjects() const noexcept
+	void Device::ReportLiveObjects(bool resetObjs) noexcept
 	{
-		if (m_d3dDevice)
-		{
-			ComPtr<ID3D11Debug> debug;
-			if (SUCCEEDED(m_d3dDevice.As(&debug)))
-			{
-				Log::Warn("Reporting D3D live device objects");
-				debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL | D3D11_RLDO_SUMMARY);
-			}
-		}
-
-		// Manually add a space to help in differentiating
-		OutputDebugStringA("");
-
 		if (m_dxgiFactory)
 		{
 			ComPtr<IDXGIDebug1> debug;
 			if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug))))
 			{
+				if (resetObjs)
+				{
+					m_dxgiFactory.Reset();
+				}
+
 				Log::Warn("Reporting DXGI live device objects");
 				debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(
 					DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+			}
+		}
+
+		// Manually add a space to help in differentiating
+		OutputDebugStringA("\n");
+
+
+		if (m_d3dDevice)
+		{
+			ComPtr<ID3D11Debug> debug;
+			if (SUCCEEDED(m_d3dDevice.As(&debug)))
+			{
+				if (resetObjs)
+				{
+					m_d3dDevice.Reset();
+				}
+
+				Log::Warn("Reporting D3D live device objects");
+				debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL | D3D11_RLDO_SUMMARY);
 			}
 		}
 	}
@@ -122,13 +139,6 @@ namespace Px::Gfx::Core
 		if (enableDebugLayer)
 		{
 			factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-		}
-
-		ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
-		if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
-		{
-			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
-			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 		}
 
 		HRESULT hr = ::CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&m_dxgiFactory));
@@ -143,6 +153,13 @@ namespace Px::Gfx::Core
 				});
 		}
 
+        ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+        if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+        {
+            dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
+            dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        }
+
 		SetDebugObjectName(m_dxgiFactory, "DXGIFactory");
 
 		return {};
@@ -152,55 +169,62 @@ namespace Px::Gfx::Core
 	{
 		Elos::ASSERT(m_dxgiFactory).Msg("DXGI factory is not initialized").Throw();
 
-		u32 adapterIndex = 0;
-		std::vector<ComPtr<DX11::IAdapter>> adapters;
-		ComPtr<IDXGIAdapter1> currentAdapter;
+	    u32 adapterIndex = 0;
+	    std::vector<ComPtr<DX11::IAdapter>> adapters;
 
-		while (m_dxgiFactory->EnumAdapters1(adapterIndex, &currentAdapter) != DXGI_ERROR_NOT_FOUND)
-		{
-			DXGI_ADAPTER_DESC1 desc;
-			currentAdapter->GetDesc1(&desc);
+	    // Use a scope to ensure currentAdapter is released properly
+	    {
+	        ComPtr<IDXGIAdapter1> currentAdapter;
+	        while (m_dxgiFactory->EnumAdapters1(adapterIndex, &currentAdapter) != DXGI_ERROR_NOT_FOUND)
+	        {
+	            DXGI_ADAPTER_DESC1 desc;
+	            currentAdapter->GetDesc1(&desc);
 
-			// Skip software adapter
-			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-			{
-				adapterIndex++;
-				continue;
-			}
+	            // Skip software adapter
+	            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+	            {
+	                currentAdapter.Reset();
+	                adapterIndex++;
+	                continue;
+	            }
 
-			ComPtr<DX11::IAdapter> adapter;
-			HRESULT hr = currentAdapter.As(&adapter);
-			if (SUCCEEDED(hr))
-			{
-				adapters.push_back(std::move(adapter));
-				adapterIndex++;
-			}
-		}
+	            ComPtr<DX11::IAdapter> adapter;
+	            if (SUCCEEDED(currentAdapter.As(&adapter)))
+	            {
+	                adapters.push_back(std::move(adapter));
+	                adapterIndex++;
+	            }
 
-		if (adapters.empty())
-		{
-			return std::unexpected(
-				Device::DeviceError
-				{
-					.Type      = Device::DeviceError::Type::EnumAdapterFailed,
-					.ErrorCode = E_FAIL,
-					.Message   = "No adapters found"
-				});
-		}
+	            currentAdapter.Reset();
+	        }
+	    }
 
-		m_dxgiAdapter.Attach(preferredAdapter < adapters.size() ? adapters[preferredAdapter].Detach() : adapters[0].Detach());
+	    if (adapters.empty())
+	    {
+	        return std::unexpected(Device::DeviceError{
+	            .Type = Device::DeviceError::Type::EnumAdapterFailed,
+	            .ErrorCode = E_FAIL,
+	            .Message = "No adapters found"
+	        });
+	    }
 
-		DXGI_ADAPTER_DESC3 desc;
-		m_dxgiAdapter->GetDesc3(&desc);
-		m_adapterInfo.Description           = Elos::WStringToString(desc.Description);
-		m_adapterInfo.DedicatedVideoMemory  = desc.DedicatedVideoMemory;
-		m_adapterInfo.DedicatedSystemMemory = desc.DedicatedSystemMemory;
-		m_adapterInfo.SharedSystemMemory    = desc.SharedSystemMemory;
-		m_adapterInfo.DxgiDesc              = desc;
+	    m_dxgiAdapter = (preferredAdapter < adapters.size()) ?
+	        std::move(adapters[preferredAdapter]) :
+	        std::move(adapters[0]);
 
-		SetDebugObjectName(m_dxgiAdapter, "DXGIAdapter");
+	    adapters.clear();
 
-		return {};
+	    DXGI_ADAPTER_DESC3 desc;
+	    m_dxgiAdapter->GetDesc3(&desc);
+	    m_adapterInfo.Description = Elos::WStringToString(desc.Description);
+	    m_adapterInfo.DedicatedVideoMemory = desc.DedicatedVideoMemory;
+	    m_adapterInfo.DedicatedSystemMemory = desc.DedicatedSystemMemory;
+	    m_adapterInfo.SharedSystemMemory = desc.SharedSystemMemory;
+	    m_adapterInfo.DxgiDesc = desc;
+
+	    SetDebugObjectName(m_dxgiAdapter, "DXGIAdapter");
+
+	    return {};
 	}
 
 	std::expected<void, Device::DeviceError> Device::InitializeDevice(const DeviceDesc& desc) noexcept
