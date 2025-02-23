@@ -14,7 +14,7 @@ namespace Prism::Gfx
 	class Renderer
 	{
 	public:
-		Renderer(Elos::Window& window);
+		Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc, const Core::SwapChain::SwapChainDesc& swapChainDesc);
 		~Renderer();
 
 		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
@@ -24,8 +24,8 @@ namespace Prism::Gfx
 		void Present();
 
 	private:
-		void CreateDevice(Elos::Window& window);
-		void CreateSwapChain(Elos::Window& window);
+		void CreateDevice(const Core::Device::DeviceDesc& deviceDesc);
+		void CreateSwapChain(const Core::SwapChain::SwapChainDesc& swapChainDesc);
 
 	private:
 		Elos::Window& m_window;

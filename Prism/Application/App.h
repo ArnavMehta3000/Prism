@@ -17,6 +17,7 @@ namespace Prism
 
 		void CreateMainWindow();
 		void ProcessWindowEvents();
+		void CreateRenderer();
 
 	private:
 		std::unique_ptr<Elos::Window> m_window;

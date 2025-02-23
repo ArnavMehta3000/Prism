@@ -20,11 +20,11 @@ namespace Prism::Gfx
 		}
 	}
 
-	Renderer::Renderer(Elos::Window& window)
+	Renderer::Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc, const Core::SwapChain::SwapChainDesc& swapChainDesc)
 		: m_window(window)
 	{
-		CreateDevice(window);
-		CreateSwapChain(window);
+		CreateDevice(deviceDesc);
+		CreateSwapChain(swapChainDesc);
 
 		Log::Info("Created Renderer");
 	}
@@ -73,12 +73,9 @@ namespace Prism::Gfx
 		}
 	}
 
-	void Renderer::CreateDevice(MAYBE_UNUSED Elos::Window& window)
+	void Renderer::CreateDevice(const Core::Device::DeviceDesc& deviceDesc)
 	{
-		if (auto result = Core::Device::Create(Core::Device::DeviceDesc
-			{
-				.EnableDebugLayer = true,
-			}); !result)
+		if (auto result = Core::Device::Create(deviceDesc); !result)
 		{
 			Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("{} (Error Code: {:#x})", result.error().Message, result.error().ErrorCode).Throw();
 			return;
@@ -92,20 +89,9 @@ namespace Prism::Gfx
 		Log::Info("Created DX11 Device");
 	}
 
-	void Renderer::CreateSwapChain(Elos::Window& window)
+	void Renderer::CreateSwapChain(const Core::SwapChain::SwapChainDesc& swapChainDesc)
 	{
-		const Elos::WindowSize windowSize = window.GetSize();
-
-		if (auto result = Core::SwapChain::Create(*m_device, Core::SwapChain::SwapChainDesc
-			{
-				.WindowHandle = window.GetHandle(),
-				.Width        = windowSize.Width,
-				.Height       = windowSize.Height,
-				.BufferCount  = 2,
-				.Format       = DXGI_FORMAT_R8G8B8A8_UNORM,
-				.AllowTearing = true,
-				.Fullscreen   = false
-			}); !result)
+		if (auto result = Core::SwapChain::Create(*m_device, swapChainDesc); !result)
 		{
 			Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("{} (Error Code: {:#x})", result.error().Message, result.error().ErrorCode).Throw();
 			return;

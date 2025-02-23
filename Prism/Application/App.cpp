@@ -24,12 +24,12 @@ namespace Prism
 
 	void App::Init()
 	{
-		Log::Info("Initializting application");
+		Log::Info("Initializing application");
 		CreateMainWindow();
 
 
-		Log::Info("Initializting renderer");
-		m_renderer = std::make_unique<Gfx::Renderer>(*m_window);
+		Log::Info("Initializing renderer");
+		CreateRenderer();
 	}
 
 	void App::Shutdown()
@@ -97,5 +97,28 @@ namespace Prism
 			OnWindowResizedEvent,
 			OnWindowKeyReleased
 		);
+	}
+
+	void App::CreateRenderer()
+	{
+		const Gfx::Core::Device::DeviceDesc deviceDesc
+		{
+			.EnableDebugLayer = true,
+		};
+
+		const Elos::WindowSize windowSize = m_window->GetSize();
+
+		const Gfx::Core::SwapChain::SwapChainDesc swapChainDesc
+		{
+			.WindowHandle = m_window->GetHandle(),
+			.Width        = windowSize.Width,
+			.Height       = windowSize.Height,
+			.BufferCount  = 2,
+			.Format       = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.AllowTearing = true,
+			.Fullscreen   = false
+		};
+
+		m_renderer = std::make_unique<Gfx::Renderer>(*m_window, deviceDesc, swapChainDesc);
 	}
 }
