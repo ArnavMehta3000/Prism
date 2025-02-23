@@ -30,6 +30,7 @@ set_runtimes(is_mode("debug") and "MTd" or "MT")
 add_requires("Elos")
 
 add_requires("cxxopts")
+add_requires("directxtk")  -- For SimpleMath
 
 target("ShaderCompiler")
 	set_kind("binary")
@@ -53,7 +54,7 @@ target("Prism")
 	add_files("Shaders/**.hlsl", {install = true })
 	add_headerfiles("(Prism/**.h)", { install = true })
 
-	add_packages("Elos")
+	add_packages("Elos", "directxtk")
 	add_deps("ShaderCompiler")
 
 	add_rules("CompileHLSL")
