@@ -13,6 +13,7 @@ struct PSInput
 
 // Vertex Shader Section
 
+#if defined(BUILD_AS_VS)
 
 PSInput VSMain(VSInput input)
 {
