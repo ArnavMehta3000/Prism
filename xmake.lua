@@ -33,6 +33,7 @@ add_requires("cxxopts")
 
 target("ShaderCompiler")
 	set_kind("binary")
+	set_default(false)
 
 	add_includedirs("ShaderCompiler", { public = true })
 	add_files("ShaderCompiler/**.cpp")
