@@ -153,12 +153,12 @@ namespace Prism::Gfx::Core
 				});
 		}
 
-        ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
-        if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
-        {
-            dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
-            dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-        }
+		ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+		if (SUCCEEDED(::DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+		{
+			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
+			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+		}
 
 		SetDebugObjectName(m_dxgiFactory, "DXGIFactory");
 
@@ -169,62 +169,62 @@ namespace Prism::Gfx::Core
 	{
 		Elos::ASSERT(m_dxgiFactory).Msg("DXGI factory is not initialized").Throw();
 
-	    u32 adapterIndex = 0;
-	    std::vector<ComPtr<DX11::IAdapter>> adapters;
+		u32 adapterIndex = 0;
+		std::vector<ComPtr<DX11::IAdapter>> adapters;
 
-	    // Use a scope to ensure currentAdapter is released properly
-	    {
-	        ComPtr<IDXGIAdapter1> currentAdapter;
-	        while (m_dxgiFactory->EnumAdapters1(adapterIndex, &currentAdapter) != DXGI_ERROR_NOT_FOUND)
-	        {
-	            DXGI_ADAPTER_DESC1 desc;
-	            currentAdapter->GetDesc1(&desc);
+		// Use a scope to ensure currentAdapter is released properly
+		{
+			ComPtr<IDXGIAdapter1> currentAdapter;
+			while (m_dxgiFactory->EnumAdapters1(adapterIndex, &currentAdapter) != DXGI_ERROR_NOT_FOUND)
+			{
+				DXGI_ADAPTER_DESC1 desc;
+				currentAdapter->GetDesc1(&desc);
 
-	            // Skip software adapter
-	            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-	            {
-	                currentAdapter.Reset();
-	                adapterIndex++;
-	                continue;
-	            }
+				// Skip software adapter
+				if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+				{
+					currentAdapter.Reset();
+					adapterIndex++;
+					continue;
+				}
 
-	            ComPtr<DX11::IAdapter> adapter;
-	            if (SUCCEEDED(currentAdapter.As(&adapter)))
-	            {
-	                adapters.push_back(std::move(adapter));
-	                adapterIndex++;
-	            }
+				ComPtr<DX11::IAdapter> adapter;
+				if (SUCCEEDED(currentAdapter.As(&adapter)))
+				{
+					adapters.push_back(std::move(adapter));
+					adapterIndex++;
+				}
 
-	            currentAdapter.Reset();
-	        }
-	    }
+				currentAdapter.Reset();
+			}
+		}
 
-	    if (adapters.empty())
-	    {
-	        return std::unexpected(Device::DeviceError{
-	            .Type = Device::DeviceError::Type::EnumAdapterFailed,
-	            .ErrorCode = E_FAIL,
-	            .Message = "No adapters found"
-	        });
-	    }
+		if (adapters.empty())
+		{
+			return std::unexpected(Device::DeviceError{
+				.Type = Device::DeviceError::Type::EnumAdapterFailed,
+				.ErrorCode = E_FAIL,
+				.Message = "No adapters found"
+			});
+		}
 
-	    m_dxgiAdapter = (preferredAdapter < adapters.size()) ?
-	        std::move(adapters[preferredAdapter]) :
-	        std::move(adapters[0]);
+		m_dxgiAdapter = (preferredAdapter < adapters.size()) ?
+			std::move(adapters[preferredAdapter]) :
+			std::move(adapters[0]);
 
-	    adapters.clear();
+		adapters.clear();
 
-	    DXGI_ADAPTER_DESC3 desc;
-	    m_dxgiAdapter->GetDesc3(&desc);
-	    m_adapterInfo.Description = Elos::WStringToString(desc.Description);
-	    m_adapterInfo.DedicatedVideoMemory = desc.DedicatedVideoMemory;
-	    m_adapterInfo.DedicatedSystemMemory = desc.DedicatedSystemMemory;
-	    m_adapterInfo.SharedSystemMemory = desc.SharedSystemMemory;
-	    m_adapterInfo.DxgiDesc = desc;
+		DXGI_ADAPTER_DESC3 desc;
+		m_dxgiAdapter->GetDesc3(&desc);
+		m_adapterInfo.Description = Elos::WStringToString(desc.Description);
+		m_adapterInfo.DedicatedVideoMemory = desc.DedicatedVideoMemory;
+		m_adapterInfo.DedicatedSystemMemory = desc.DedicatedSystemMemory;
+		m_adapterInfo.SharedSystemMemory = desc.SharedSystemMemory;
+		m_adapterInfo.DxgiDesc = desc;
 
-	    SetDebugObjectName(m_dxgiAdapter, "DXGIAdapter");
+		SetDebugObjectName(m_dxgiAdapter, "DXGIAdapter");
 
-	    return {};
+		return {};
 	}
 
 	std::expected<void, Device::DeviceError> Device::InitializeDevice(const DeviceDesc& desc) noexcept
@@ -272,7 +272,7 @@ namespace Prism::Gfx::Core
 			return std::unexpected(DeviceError
 				{
 					.Type      = DeviceError::Type::CreateDeviceFailed,
-				 	.ErrorCode = hr,
+					.ErrorCode = hr,
 					.Message   = "Failed to get ID3D11Device4 interface"
 				});
 		}
@@ -309,9 +309,9 @@ namespace Prism::Gfx::Core
 				infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 #endif
 				std::array hide =
-		        {
-			        D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
-		        };
+				{
+					D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
+				};
 
 				D3D11_INFO_QUEUE_FILTER filter = {};
 				filter.DenyList.NumIDs = hide.size();
