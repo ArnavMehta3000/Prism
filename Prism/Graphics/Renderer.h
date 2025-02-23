@@ -20,6 +20,7 @@ namespace Prism::Gfx
 		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
 		NODISCARD inline Core::SwapChain* GetSwapChain() const noexcept { return m_swapChain.get(); }
 
+		void ClearBackBuffer(const f32* clearColor);
 		void Resize(u32 width, u32 height);
 		void Present();
 

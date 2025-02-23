@@ -36,6 +36,14 @@ namespace Prism::Gfx
 		m_device.reset();
 	}
 
+	void Renderer::ClearBackBuffer(const f32* clearColor)
+	{
+		DX11::IDeviceContext* const context = m_device->GetContext();
+		DX11::IRenderTarget* const backBufferRTV = m_swapChain->GetBackBufferRTV();
+
+		context->ClearRenderTargetView(backBufferRTV, clearColor);
+	}
+
 	void Renderer::Resize(u32 width, u32 height)
 	{
 		if (width == 0 || height == 0)

@@ -1,5 +1,6 @@
 #include "App.h"
 #include "Utils/Log.h"
+#include <DirectXColors.h>
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <array>
@@ -42,13 +43,7 @@ namespace Prism
 	{
 		if (m_renderer)
 		{
-			// Clear back buffer
-			auto context = m_renderer->GetDevice()->GetContext();
-			auto backBufferRTV = m_renderer->GetSwapChain()->GetBackBufferRTV();
-			std::array clearColor = { 1.0f, 0.0f, 0.0f, 1.0f} ;
-
-			context->ClearRenderTargetView(backBufferRTV, clearColor.data());
-
+			m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
 			m_renderer->Present();
 		}
 	}
