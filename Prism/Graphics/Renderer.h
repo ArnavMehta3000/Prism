@@ -11,6 +11,8 @@ namespace Elos
 
 namespace Prism::Gfx
 {
+	class Camera;
+
 	class Renderer
 	{
 	public:

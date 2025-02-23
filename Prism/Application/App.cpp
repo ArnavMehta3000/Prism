@@ -41,6 +41,11 @@ namespace Prism
 
 	void App::Tick()
 	{
+		if (m_camera)
+		{
+			m_camera->Update();
+		}
+
 		if (m_renderer)
 		{
 			m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
@@ -80,6 +85,13 @@ namespace Prism
 		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
 		{
 			Log::Info("Window resized: {0}x{1}", e.Size.Width, e.Size.Height);
+
+			if (m_camera)
+			{
+				m_camera->Resize(e.Size.Width, e.Size.Height);
+				Log::Info("Camera aspect ratio: {}", m_camera->GetAspectRatio());
+			}
+
 			if (m_renderer)
 			{
 				m_renderer->Resize(e.Size.Width, e.Size.Height);
@@ -115,5 +127,14 @@ namespace Prism
 		};
 
 		m_renderer = std::make_unique<Gfx::Renderer>(*m_window, deviceDesc, swapChainDesc);
+
+		// Create camera
+		Gfx::Camera::CameraDesc cameraDesc;
+		cameraDesc.Position    = Vector3(0, 5, -10);
+		cameraDesc.AspectRatio = static_cast<f32>(windowSize.Width) / static_cast<f32>(windowSize.Height);
+		cameraDesc.VerticalFOV = 60.0f;
+		cameraDesc.OrthoWidth  = 20.0f;
+		cameraDesc.OrthoHeight = 11.25f;
+		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
 	}
 }

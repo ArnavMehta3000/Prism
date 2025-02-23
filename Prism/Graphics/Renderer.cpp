@@ -9,14 +9,14 @@ namespace Prism::Gfx
 	{
 		void LogAdapterInfo(const Prism::Gfx::Core::AdapterInfo& adapterInfo)
 		{
-			Prism::Log::Info("Adapter Name: {}"                           , adapterInfo.Description);
-			Prism::Log::Info("Adapter Vendor: {}"                         , adapterInfo.DxgiDesc.VendorId);
-			Prism::Log::Info("Adapter Device: {}"                         , adapterInfo.DxgiDesc.DeviceId);
-			Prism::Log::Info("Adapter Subsystem: {}"                      , adapterInfo.DxgiDesc.SubSysId);
-			Prism::Log::Info("Adapter Revision: {}"                       , adapterInfo.DxgiDesc.Revision);
-			Prism::Log::Info("Adapter Dedicated Video Memory(GB): {:.3f}" , static_cast<f32>(adapterInfo.DedicatedVideoMemory) / 1024 / 1024 / 1024);
-			Prism::Log::Info("Adapter Shared System Memory(GB): {:.3f}"   , static_cast<f32>(adapterInfo.SharedSystemMemory) / 1024 / 1024 / 1024);
-			Prism::Log::Info("Adapter Dedicated System Memory(GB): {:.3f}", static_cast<f32>(adapterInfo.DedicatedSystemMemory) / 1024 / 1024 / 1024);
+			Log::Info("Adapter Name: {}"                           , adapterInfo.Description);
+			Log::Info("Adapter Vendor: {}"                         , adapterInfo.DxgiDesc.VendorId);
+			Log::Info("Adapter Device: {}"                         , adapterInfo.DxgiDesc.DeviceId);
+			Log::Info("Adapter Subsystem: {}"                      , adapterInfo.DxgiDesc.SubSysId);
+			Log::Info("Adapter Revision: {}"                       , adapterInfo.DxgiDesc.Revision);
+			Log::Info("Adapter Dedicated Video Memory(GB): {:.3f}" , static_cast<f32>(adapterInfo.DedicatedVideoMemory) / 1024 / 1024 / 1024);
+			Log::Info("Adapter Shared System Memory(GB): {:.3f}"   , static_cast<f32>(adapterInfo.SharedSystemMemory) / 1024 / 1024 / 1024);
+			Log::Info("Adapter Dedicated System Memory(GB): {:.3f}", static_cast<f32>(adapterInfo.DedicatedSystemMemory) / 1024 / 1024 / 1024);
 		}
 	}
 
