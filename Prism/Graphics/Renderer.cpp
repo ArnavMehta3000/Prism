@@ -3,20 +3,20 @@
 #include <Elos/Common/Assert.h>
 #include <Elos/Window/Window.h>
 
-namespace Px::Gfx
+namespace Prism::Gfx
 {
 	namespace Internal
 	{
-		void LogAdapterInfo(const Px::Gfx::Core::AdapterInfo& adapterInfo)
+		void LogAdapterInfo(const Prism::Gfx::Core::AdapterInfo& adapterInfo)
 		{
-			Px::Log::Info("Adapter Name: {}"                           , adapterInfo.Description);
-			Px::Log::Info("Adapter Vendor: {}"                         , adapterInfo.DxgiDesc.VendorId);
-			Px::Log::Info("Adapter Device: {}"                         , adapterInfo.DxgiDesc.DeviceId);
-			Px::Log::Info("Adapter Subsystem: {}"                      , adapterInfo.DxgiDesc.SubSysId);
-			Px::Log::Info("Adapter Revision: {}"                       , adapterInfo.DxgiDesc.Revision);
-			Px::Log::Info("Adapter Dedicated Video Memory(GB): {:.3f}" , static_cast<f32>(adapterInfo.DedicatedVideoMemory) / 1024 / 1024 / 1024);
-			Px::Log::Info("Adapter Shared System Memory(GB): {:.3f}"   , static_cast<f32>(adapterInfo.SharedSystemMemory) / 1024 / 1024 / 1024);
-			Px::Log::Info("Adapter Dedicated System Memory(GB): {:.3f}", static_cast<f32>(adapterInfo.DedicatedSystemMemory) / 1024 / 1024 / 1024);
+			Prism::Log::Info("Adapter Name: {}"                           , adapterInfo.Description);
+			Prism::Log::Info("Adapter Vendor: {}"                         , adapterInfo.DxgiDesc.VendorId);
+			Prism::Log::Info("Adapter Device: {}"                         , adapterInfo.DxgiDesc.DeviceId);
+			Prism::Log::Info("Adapter Subsystem: {}"                      , adapterInfo.DxgiDesc.SubSysId);
+			Prism::Log::Info("Adapter Revision: {}"                       , adapterInfo.DxgiDesc.Revision);
+			Prism::Log::Info("Adapter Dedicated Video Memory(GB): {:.3f}" , static_cast<f32>(adapterInfo.DedicatedVideoMemory) / 1024 / 1024 / 1024);
+			Prism::Log::Info("Adapter Shared System Memory(GB): {:.3f}"   , static_cast<f32>(adapterInfo.SharedSystemMemory) / 1024 / 1024 / 1024);
+			Prism::Log::Info("Adapter Dedicated System Memory(GB): {:.3f}", static_cast<f32>(adapterInfo.DedicatedSystemMemory) / 1024 / 1024 / 1024);
 		}
 	}
 

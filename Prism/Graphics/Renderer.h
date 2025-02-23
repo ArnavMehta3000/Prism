@@ -9,7 +9,7 @@ namespace Elos
 	class Window;
 }
 
-namespace Px::Gfx
+namespace Prism::Gfx
 {
 	class Renderer
 	{

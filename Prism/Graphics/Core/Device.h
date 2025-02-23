@@ -8,7 +8,7 @@
 #include <memory>
 #include <span>
 
-namespace Px::Gfx::Core
+namespace Prism::Gfx::Core
 {
 	struct AdapterInfo
 	{

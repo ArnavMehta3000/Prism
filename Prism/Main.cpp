@@ -5,13 +5,13 @@ int main()
 {
 	try
 	{
-		Px::Log::Init();
-		Px::App app;
+		Prism::Log::Init();
+		Prism::App app;
 		app.Run();
 	}
 	catch (const std::exception& e)
 	{
-		Px::Log::Error("Exception thrown: {}", e.what());
+		Prism::Log::Error("Exception thrown: {}", e.what());
 	}
 
 	return 0;

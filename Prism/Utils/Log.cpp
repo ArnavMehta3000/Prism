@@ -1,7 +1,7 @@
 #include "Log.h"
 #include <Windows.h>
 
-namespace Px
+namespace Prism
 {
 	static bool s_isLogInitialized = false;
 

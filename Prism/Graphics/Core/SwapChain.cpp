@@ -1,7 +1,7 @@
 #include "Graphics/Core/SwapChain.h"
 #include "Graphics/Core/Device.h"
 
-namespace Px::Gfx::Core
+namespace Prism::Gfx::Core
 {
 	std::expected<std::unique_ptr<SwapChain>, SwapChain::SwapChainError> SwapChain::Create(Device& device, const SwapChainDesc& desc) noexcept
 	{

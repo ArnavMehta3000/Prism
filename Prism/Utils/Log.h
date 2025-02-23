@@ -3,7 +3,7 @@
 #include <chrono>
 #include <ctime>
 
-namespace Px
+namespace Prism
 {
 	class Log
 	{

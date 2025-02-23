@@ -4,7 +4,7 @@
 #include <Elos/Common/Assert.h>
 #include <array>
 
-namespace Px
+namespace Prism
 {
 	void App::Run()
 	{

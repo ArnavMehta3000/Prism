@@ -3,12 +3,12 @@
 #include <dxgi1_6.h>
 #include <wrl/client.h>
 
-namespace Px
+namespace Prism
 {
 	template <typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 }
 
-namespace Px::DX11
+namespace Prism::DX11
 {
 	using IDevice            = ID3D11Device5;
 	using IDeviceContext     = ID3D11DeviceContext4;

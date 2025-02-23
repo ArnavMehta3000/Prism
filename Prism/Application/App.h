@@ -3,7 +3,7 @@
 #include "Graphics/Renderer.h"
 #include <Elos/Window/Window.h>
 
-namespace Px
+namespace Prism
 {
 	class App
 	{

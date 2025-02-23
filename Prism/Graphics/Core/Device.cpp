@@ -5,7 +5,7 @@
 #include <array>
 #include <dxgidebug.h>
 
-namespace Px::Gfx::Core
+namespace Prism::Gfx::Core
 {
 	std::expected<std::unique_ptr<Device>, Device::DeviceError> Device::Create(const DeviceDesc& desc) noexcept
 	{

@@ -1,7 +1,7 @@
 #pragma once
 #include <Elos/Common/StandardTypes.h>
 
-namespace Px
+namespace Prism
 {
 	using i8     = Elos::i8;
 	using i16    = Elos::i16;

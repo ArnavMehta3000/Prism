@@ -8,7 +8,7 @@
 #include <expected>
 #include <memory>
 
-namespace Px::Gfx::Core
+namespace Prism::Gfx::Core
 {
 	class Device;
 
