@@ -45,56 +45,6 @@ namespace Prism::Gfx::Core
 		return std::find(m_supportedFeatureLevels.begin(), m_supportedFeatureLevels.end(), level) != m_supportedFeatureLevels.end();
 	}
 
-	std::expected<ComPtr<DX11::IBuffer>, HRESULT> Device::CreateBuffer(const D3D11_BUFFER_DESC& desc, const D3D11_SUBRESOURCE_DATA* initialData) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::ITexture2D>, HRESULT> Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC& desc, const D3D11_SUBRESOURCE_DATA* initialData) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IRenderTarget>, HRESULT> Device::CreateRenderTargetView(ID3D11Resource* resource, const D3D11_RENDER_TARGET_VIEW_DESC* desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IDepthStencil>, HRESULT> Device::CreateDepthStencilView(ID3D11Resource* resource, const D3D11_DEPTH_STENCIL_VIEW_DESC* desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IShaderResource>, HRESULT> Device::CreateShaderResourceView(ID3D11Resource* resource, const D3D11_SHADER_RESOURCE_VIEW_DESC* desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IUnorderedAccess>, HRESULT> Device::CreateUnorderedAccessView(ID3D11Resource* resource, const D3D11_UNORDERED_ACCESS_VIEW_DESC* desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::ISamplerState>, HRESULT> Device::CreateSamplerState(const D3D11_SAMPLER_DESC& desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IRasterizerState>, HRESULT> Device::CreateRasterizerState(const D3D11_RASTERIZER_DESC& desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IDepthStencilState>, HRESULT> Device::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
-	std::expected<ComPtr<DX11::IBlendState>, HRESULT> Device::CreateBlendState(const D3D11_BLEND_DESC& desc) const noexcept
-	{
-		return std::unexpected(E_FAIL);
-	}
-
 	void Device::ReportLiveObjects(bool resetObjs) noexcept
 	{
 		if (m_dxgiFactory)
@@ -314,7 +264,7 @@ namespace Prism::Gfx::Core
 				};
 
 				D3D11_INFO_QUEUE_FILTER filter = {};
-				filter.DenyList.NumIDs = hide.size();
+				filter.DenyList.NumIDs = static_cast<u32>(hide.size());
 				filter.DenyList.pIDList = hide.data();
 
 				infoQueue->AddStorageFilterEntries(&filter);

@@ -51,17 +51,6 @@ namespace Prism::Gfx::Core
 
 		NODISCARD bool SupportsFeatureLevel(D3D_FEATURE_LEVEL level) const noexcept;
 
-		NODISCARD std::expected<ComPtr<DX11::IBuffer>           , HRESULT> CreateBuffer(const D3D11_BUFFER_DESC& desc, const D3D11_SUBRESOURCE_DATA* initialData = nullptr) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::ITexture2D>        , HRESULT> CreateTexture2D(const D3D11_TEXTURE2D_DESC& desc, const D3D11_SUBRESOURCE_DATA* initialData = nullptr) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IRenderTarget>     , HRESULT> CreateRenderTargetView(ID3D11Resource* resource, const D3D11_RENDER_TARGET_VIEW_DESC* desc = nullptr) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IDepthStencil>     , HRESULT> CreateDepthStencilView(ID3D11Resource* resource, const D3D11_DEPTH_STENCIL_VIEW_DESC* desc = nullptr) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IShaderResource>   , HRESULT> CreateShaderResourceView(ID3D11Resource* resource, const D3D11_SHADER_RESOURCE_VIEW_DESC* desc = nullptr) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IUnorderedAccess>  , HRESULT> CreateUnorderedAccessView(ID3D11Resource* resource, const D3D11_UNORDERED_ACCESS_VIEW_DESC* desc = nullptr) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::ISamplerState>     , HRESULT> CreateSamplerState(const D3D11_SAMPLER_DESC& desc) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IRasterizerState>  , HRESULT> CreateRasterizerState(const D3D11_RASTERIZER_DESC& desc) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IDepthStencilState>, HRESULT> CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& desc) const noexcept;
-		NODISCARD std::expected<ComPtr<DX11::IBlendState>       , HRESULT> CreateBlendState(const D3D11_BLEND_DESC& desc) const noexcept;
-
 		NODISCARD inline std::span<const D3D_FEATURE_LEVEL> GetSupportedFeatureLevels() const noexcept { return m_supportedFeatureLevels; }
 		NODISCARD inline const AdapterInfo&                 GetAdapterInfo() const noexcept            { return m_adapterInfo;            }
 		NODISCARD inline DX11::IDevice*                     GetDevice() const noexcept                 { return m_d3dDevice.Get();        }
