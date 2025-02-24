@@ -1,6 +1,8 @@
 #include "App.h"
 #include "Utils/Log.h"
+#include "Graphics/Utils/ResourceFactory.h"
 #include <DirectXColors.h>
+#include <VertexTypes.h>
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <array>
@@ -31,10 +33,19 @@ namespace Prism
 
 		Log::Info("Initializing renderer");
 		CreateRenderer();
+		
+		Log::Info("Creating resources");
+		CreateResources();
+
+		Log::Info("Creating constant buffer");
+		CreateConstantBuffer();
 	}
 
 	void App::Shutdown()
 	{
+		m_wvpCBuffer.reset();
+		m_mesh.reset();
+		m_camera.reset();
 		m_renderer.reset();
 		m_window.reset();
 	}
@@ -48,9 +59,11 @@ namespace Prism
 
 		if (m_renderer)
 		{
+			m_renderer->ClearState();
 			m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
 			m_renderer->Present();
 		}
+		
 	}
 
 	void App::CreateMainWindow()
@@ -136,5 +149,66 @@ namespace Prism
 		cameraDesc.OrthoWidth  = 20.0f;
 		cameraDesc.OrthoHeight = 11.25f;
 		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
+	}
+	
+	void App::CreateResources()
+	{
+		using namespace DirectX;
+
+		const std::array vertices =
+		{
+			VertexPositionColor(XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1, 0, 0, 1)),  // 0
+			VertexPositionColor(XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT4(0, 1, 0, 1)),  // 1
+			VertexPositionColor(XMFLOAT3(1.0f,  1.0f, -1.0f),  XMFLOAT4(0, 0, 1, 1)),  // 2
+			VertexPositionColor(XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT4(1, 1, 0, 1)),  // 3
+			VertexPositionColor(XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT4(1, 0, 1, 1)),  // 4
+			VertexPositionColor(XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT4(0, 1, 1, 1)),  // 5
+			VertexPositionColor(XMFLOAT3(1.0f,  1.0f,  1.0f),  XMFLOAT4(1, 1, 1, 1)),  // 6
+			VertexPositionColor(XMFLOAT3(1.0f, -1.0f,  1.0f),  XMFLOAT4(0, 0, 0, 1))   // 7
+		};
+
+		constexpr std::array<u32, 36> indices =
+		{
+			// Front face (z = -1)
+			0, 1, 2, 0, 2, 3,
+			// Back face (z = +1)
+			4, 6, 5, 4, 7, 6,
+			// Left face (x = -1)
+			4, 5, 1, 4, 1, 0,
+			// Right face (x = +1)
+			3, 2, 6, 3, 6, 7,
+			// Top face (y = +1)
+			1, 5, 6, 1, 6, 2,
+			// Bottom face (y = -1)
+			4, 0, 3, 4, 3, 7
+		};
+
+		Gfx::Mesh::MeshDesc meshDesc{};
+		meshDesc.VertexStride = sizeof(VertexPositionColor);
+
+		const auto& resourceFactory = m_renderer->GetResourceFactory();
+
+		if (auto meshResult = resourceFactory.CreateMesh<VertexPositionColor>(vertices, indices, meshDesc); !meshResult)
+		{
+			Elos::ASSERT(SUCCEEDED(meshResult.error().ErrorCode)).Msg("Failed to create mesh! (Error Code: {:#x})", meshResult.error().ErrorCode).Throw();
+		}
+		else
+		{
+			m_mesh = std::move(meshResult.value());
+		}
+	}
+	
+	void App::CreateConstantBuffer()
+	{
+		const auto& resourceFactory = m_renderer->GetResourceFactory();
+		
+		if (auto cbResult = resourceFactory.CreateConstantBuffer<WVP>(); !cbResult)
+		{
+			Elos::ASSERT(SUCCEEDED(cbResult.error().ErrorCode)).Msg("Failed to create constant buffer! (Error Code: {:#x})", cbResult.error().ErrorCode).Throw();
+		}
+		else
+		{
+			m_wvpCBuffer = std::move(cbResult.value());
+		}
 	}
 }

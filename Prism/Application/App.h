@@ -2,10 +2,19 @@
 #include "StandardTypes.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Camera.h"
+#include "Graphics/Mesh.h"
+#include "Graphics/Resources/Buffers/ConstantBuffer.h"
 #include <Elos/Window/Window.h>
 
 namespace Prism
 {
+	struct WVP
+	{
+		Matrix World;
+		Matrix View;
+		Matrix Projection;
+	};
+
 	class App
 	{
 	public:
@@ -19,10 +28,14 @@ namespace Prism
 		void CreateMainWindow();
 		void ProcessWindowEvents();
 		void CreateRenderer();
+		void CreateResources();
+		void CreateConstantBuffer();
 
 	private:
 		std::unique_ptr<class Elos::Window> m_window;
 		std::unique_ptr<Gfx::Renderer>      m_renderer;
 		std::unique_ptr<Gfx::Camera>        m_camera;
+		std::unique_ptr<Gfx::Mesh>          m_mesh;
+		std::unique_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
 	};
 }
