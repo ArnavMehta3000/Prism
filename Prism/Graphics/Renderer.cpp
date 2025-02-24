@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Utils/Log.h"
+#include "Graphics/Utils/ResourceFactory.h"
 #include <Elos/Common/Assert.h>
 #include <Elos/Window/Window.h>
 
@@ -26,25 +27,38 @@ namespace Prism::Gfx
 		CreateDevice(deviceDesc);
 		CreateSwapChain(swapChainDesc);
 
+		m_resourceFactory = std::make_unique<ResourceFactory>(m_device.get());
+
 		Log::Info("Created Renderer");
 	}
 
 	Renderer::~Renderer()
 	{
 		Log::Info("Shutting down Renderer");
+		m_resourceFactory.reset();
 		m_swapChain.reset();
 		m_device.reset();
 	}
 
-	void Renderer::ClearBackBuffer(const f32* clearColor)
+	void Renderer::ClearState() const
+	{
+		m_device->GetContext()->ClearState();
+	}
+
+	void Renderer::ClearBackBuffer(const f32* clearColor) const
 	{
 		DX11::IDeviceContext* const context = m_device->GetContext();
 		DX11::IRenderTarget* const backBufferRTV = m_swapChain->GetBackBufferRTV();
-
+		
 		context->ClearRenderTargetView(backBufferRTV, clearColor);
 	}
 
-	void Renderer::Resize(u32 width, u32 height)
+	void Renderer::SetViewports(const std::span<D3D11_VIEWPORT> viewports) const
+	{
+		m_device->GetContext()->RSSetViewports(static_cast<u32>(viewports.size()), viewports.data());
+	}
+
+	void Renderer::Resize(u32 width, u32 height) const
 	{
 		if (width == 0 || height == 0)
 		{
@@ -65,7 +79,7 @@ namespace Prism::Gfx
 		}
 	}
 
-	void Renderer::Present()
+	void Renderer::Present() const
 	{
 		if (m_swapChain)
 		{
@@ -79,6 +93,11 @@ namespace Prism::Gfx
 			std::ignore = m_swapChain->Present();
 #endif
 		}
+	}
+
+	void Renderer::Flush() const
+	{
+		m_device->GetContext()->Flush();
 	}
 
 	void Renderer::CreateDevice(const Core::Device::DeviceDesc& deviceDesc)
