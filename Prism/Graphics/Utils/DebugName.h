@@ -10,9 +10,6 @@ namespace Prism::Gfx
 #if PRISM_BUILD_DEBUG
 		if (resource)
 		{
-			// Buffer to store the current name
-			char currentName[256];
-			unsigned int nameLength = sizeof(currentName);
 			resource->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<unsigned int>(name.length()), name.data());
 		}
 #endif
