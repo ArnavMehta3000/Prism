@@ -143,7 +143,7 @@ namespace Prism
 
 		const auto OnWindowMouseMoveRaw = [this](const Elos::Event::MouseMovedRaw& e)
 		{
-			if (m_camera && m_hasFocus)
+			if (m_camera && m_isMouseDown)
 			{
 				m_camera->RotateAround(Vector3::Zero, Vector3::Up, e.DeltaX * 0.01f);
 				m_camera->RotateAround(Vector3::Zero, Vector3::Right, e.DeltaY * 0.01f);
@@ -154,7 +154,7 @@ namespace Prism
 		{
 			if (e.Button == Elos::KeyCode::MouseButton::Left)
 			{
-				m_hasFocus = true;
+				m_isMouseDown = true;
 			}
 		};
 
@@ -162,7 +162,7 @@ namespace Prism
 		{
 			if (e.Button == Elos::KeyCode::MouseButton::Left)
 			{
-				m_hasFocus = false;
+				m_isMouseDown = false;
 			}
 		};
 
