@@ -40,5 +40,7 @@ namespace Prism
 		std::unique_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
 		std::unique_ptr<Gfx::Shader>              m_shaderVS;
 		std::unique_ptr<Gfx::Shader>              m_shaderPS;
+
+		bool m_hasFocus = false;
 	};
 }

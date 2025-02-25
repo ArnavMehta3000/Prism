@@ -23,10 +23,14 @@ namespace Prism::Gfx
 			ProjectionType Projection = ProjectionType::Perspective;
 		};
 
-		constexpr static f32 MinFOV         = 1.0f;
-		constexpr static f32 MaxFOV         = 180.0f;
-		constexpr static f32 MinOrthoHeight = 0.1f;
-		constexpr static f32 MaxOrthoHeight = 1000.0f;
+		constexpr static f32 MinFOV             = 1.0f;
+		constexpr static f32 MaxFOV             = 120.0f;
+		constexpr static f32 MinOrthoHeight     = 10.0f;
+		constexpr static f32 MaxOrthoHeight     = 2000.0f;
+		constexpr static f32 MinZoomLevel       = 0.1f;
+		constexpr static f32 MaxZoomLevel       = 50.0f;
+		constexpr static f32 DefaultFOV         = 45.0f;
+		constexpr static f32 DefaultOrthoHeight = 500.0f;
 
 	public:
 		Camera(const CameraDesc& desc = CameraDesc{});
@@ -45,7 +49,8 @@ namespace Prism::Gfx
 		void RotateAround(const Vector3& point, const Vector3& axis, f32 angle);
 		void Update();
 		void Resize(const u32 width, const u32 height);
-		void Zoom(const f32 zoomMultiplier);
+		void SetZoomLevel(f32 newZoomLevel);
+		void ZoomBy(f32 zoomDelta);
 
 		NODISCARD Matrix GetViewMatrix() const { return m_viewMatrix; }
 		NODISCARD Matrix GetProjectionMatrix() const { return m_projMatrix; }
@@ -62,6 +67,7 @@ namespace Prism::Gfx
 		NODISCARD f32 GetOrthoHeight() const { return m_orthoHeight; }
 		NODISCARD f32 GetProjectionBlend() const { return m_projectionBlend; }
 		NODISCARD ProjectionType GetProjectionType() const { return m_projType; }
+		NODISCARD f32 GetZoomLevel() const { return m_zoomLevel; }
 
 	private:
 		void UpdateViewMatrix();
@@ -83,6 +89,7 @@ namespace Prism::Gfx
 		f32            m_orthoWidth;
 		f32            m_orthoHeight;
 		f32            m_projectionBlend;  // 0.0 = perspective, 1.0 = orthographic
+		f32            m_zoomLevel = 1.0f;
 		ProjectionType m_projType;
 		bool           m_viewDirty = true;
 		bool           m_projDirty = true;

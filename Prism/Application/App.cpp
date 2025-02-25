@@ -55,18 +55,38 @@ namespace Prism
 
 	void App::Tick()
 	{
-		if (m_camera)
+		m_camera->SetLookAt(Vector3::Zero);
+		m_camera->Update();
+		
+		m_renderer->ClearState();
+		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
+
+		m_renderer->SetBackBufferRenderTarget();
+		m_renderer->SetWindowAsViewport();
+
+		// Update CB
+		WVP wvp
 		{
-			m_camera->Update();
+			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
+			.View       = m_camera->GetViewMatrix().Transpose(),
+			.Projection = m_camera->GetProjectionMatrix().Transpose()
+		};
+		
+		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
+		{
+			Log::Error("Failed to update constant buffer");
+			return;
 		}
 
-		if (m_renderer)
-		{
-			m_renderer->ClearState();
-			m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
-			m_renderer->Present();
-		}
+		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
+		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
 		
+		// Draw the mesh
+		m_renderer->SetShader(*m_shaderVS);
+		m_renderer->SetShader(*m_shaderPS);
+		m_renderer->DrawMesh(*m_mesh);
+
+		m_renderer->Present();
 	}
 
 	void App::CreateMainWindow()
@@ -96,6 +116,13 @@ namespace Prism
 				Log::Info("Escape pressed...Closing window");
 				m_window->Close();
 			}
+
+			if (e.Key == Elos::KeyCode::R)
+			{
+				Log::Info("Resetting camera");
+				m_camera->SetPosition(Vector3(0, 0, 10));
+				m_camera->SetOrientation(Quaternion::Identity);
+			}
 		};
 
 		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
@@ -114,11 +141,52 @@ namespace Prism
 			}
 		};
 
+		const auto OnWindowMouseMoveRaw = [this](const Elos::Event::MouseMovedRaw& e)
+		{
+			if (m_camera && m_hasFocus)
+			{
+				m_camera->RotateAround(Vector3::Zero, Vector3::Up, e.DeltaX * 0.01f);
+				m_camera->RotateAround(Vector3::Zero, Vector3::Right, e.DeltaY * 0.01f);
+			}
+		};
+
+		const auto OnWindowMousePressed = [this](const Elos::Event::MouseButtonPressed& e)
+		{
+			if (e.Button == Elos::KeyCode::MouseButton::Left)
+			{
+				m_hasFocus = true;
+			}
+		};
+
+		const auto OnWindowMouseReleased = [this](const Elos::Event::MouseButtonReleased& e)
+		{
+			if (e.Button == Elos::KeyCode::MouseButton::Left)
+			{
+				m_hasFocus = false;
+			}
+		};
+
+		const auto OnWindowMouseWheel = [this](const Elos::Event::MouseWheelScrolled& e)
+		{
+			if (e.Wheel == Elos::KeyCode::MouseWheel::Vertical)
+			{
+				if (m_camera)
+				{
+					m_camera->ZoomBy(e.Delta * 0.05f);
+					Log::Warn("Camera Zoom {}\t Wheel Delta: {}", m_camera->GetZoomLevel(), e.Delta);
+				}
+			}
+		};
+
 
 		m_window->HandleEvents(
 			OnWindowClosedEvent,
 			OnWindowResizedEvent,
-			OnWindowKeyReleased
+			OnWindowKeyReleased,
+			OnWindowMouseMoveRaw,
+			OnWindowMousePressed,
+			OnWindowMouseReleased,
+			OnWindowMouseWheel
 		);
 	}
 
@@ -146,7 +214,7 @@ namespace Prism
 
 		// Create camera
 		Gfx::Camera::CameraDesc cameraDesc;
-		cameraDesc.Position    = Vector3(0, 5, -10);
+		cameraDesc.Position    = Vector3(0, 0, 10);
 		cameraDesc.AspectRatio = static_cast<f32>(windowSize.Width) / static_cast<f32>(windowSize.Height);
 		cameraDesc.VerticalFOV = 60.0f;
 		cameraDesc.OrthoWidth  = 20.0f;
@@ -158,6 +226,7 @@ namespace Prism
 	{
 		using namespace DirectX;
 
+#pragma region Create mesh
 		const std::array vertices =
 		{
 			VertexPositionColor(XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1, 0, 0, 1)),  // 0
@@ -199,9 +268,11 @@ namespace Prism
 		{
 			m_mesh = std::move(meshResult.value());
 		}
+#pragma endregion
 
 
-		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Vertex>("Shaders/Test_VS.cso"); !shaderResult)
+#pragma region Create shaders
+		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Vertex>("Shaders/DrawCube_VS.cso"); !shaderResult)
 		{
 			Elos::ASSERT(SUCCEEDED(shaderResult.error().ErrorCode)).Msg("Failed to create vertex shader! (Error Code: {:#x})", shaderResult.error().ErrorCode).Throw();
 		}
@@ -211,7 +282,7 @@ namespace Prism
 			m_shaderVS->SetShaderDebugName("Test_VS");
 		}
 
-		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Pixel>("Shaders/Test_PS.cso"); !shaderResult)
+		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Pixel>("Shaders/DrawCube_PS.cso"); !shaderResult)
 		{
 			Elos::ASSERT(SUCCEEDED(shaderResult.error().ErrorCode)).Msg("Failed to create pixel shader! (Error Code: {:#x})", shaderResult.error().ErrorCode).Throw();
 		}
@@ -220,6 +291,7 @@ namespace Prism
 			m_shaderPS = std::move(shaderResult.value());
 			m_shaderPS->SetShaderDebugName("Test_PS");
 		}
+#pragma endregion
 
 #if PRISM_BUILD_DEBUG  // Shader pointers will be valid here. The above asserts should catch them
 		Elos::ASSERT(Gfx::Shader::IsValid(*m_shaderVS)).Msg("Vertex shader not valid!").Throw();

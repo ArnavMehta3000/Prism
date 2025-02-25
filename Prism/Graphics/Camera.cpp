@@ -257,12 +257,40 @@ namespace Prism::Gfx
 		}
 	}
 
-	void Camera::Zoom(const f32 zoomMultiplier)
+	void Camera::SetZoomLevel(f32 newZoomLevel)
 	{
-		m_fovY        = std::clamp(m_fovY * zoomMultiplier, MinFOV, MaxFOV);
-		m_orthoHeight = std::clamp(m_orthoHeight * zoomMultiplier, MinOrthoHeight, MaxOrthoHeight);
-		m_orthoWidth  = m_orthoHeight * m_aspectRatio;
-		m_projDirty   = true;
+		m_zoomLevel = std::clamp(newZoomLevel, MinZoomLevel, MaxZoomLevel);
+
+		// Calculate FOV and ortho height based on zoom level
+		// Inverse relationship: higher zoom level = smaller FOV / smaller ortho height
+		f32 zoomFactor = 1.0f / m_zoomLevel;
+
+		m_fovY = std::clamp(DefaultFOV * zoomFactor, MinFOV, MaxFOV);
+
+		m_orthoHeight = std::clamp(DefaultOrthoHeight * zoomFactor, MinOrthoHeight, MaxOrthoHeight);
+		m_orthoWidth = m_orthoHeight * m_aspectRatio;
+
+		m_projDirty = true;
+	}
+
+	void Camera::ZoomBy(f32 zoomDelta)
+	{
+		// Exponential zoom for more natural feel
+		// Positive delta zooms in, negative delta zooms out
+		f32 newZoomLevel;
+
+		if (zoomDelta > 0.0f)
+		{
+			// Zoom in: multiply by zoom factor for smoother zoom at higher levels
+			newZoomLevel = m_zoomLevel * (1.0f + zoomDelta * 0.1f);
+		}
+		else
+		{
+			// Zoom out: divide by zoom factor for smoother zoom at lower levels
+			newZoomLevel = m_zoomLevel / (1.0f - zoomDelta * 0.1f);
+		}
+
+		SetZoomLevel(newZoomLevel);
 	}
 	
 	void Camera::UpdateViewMatrix()

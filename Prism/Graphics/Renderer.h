@@ -2,8 +2,9 @@
 #include "Graphics/DX11Types.h"
 #include "Graphics/Core/Device.h"
 #include "Graphics/Core/SwapChain.h"
-#include "Graphics/Mesh.h"
-#include <Elos/Common/String.h>
+#include "Graphics/Resources/Buffers/ConstantBuffer.h"
+#include "Graphics/Resources/Shaders/Shader.h"
+#include <span>
 
 namespace Elos
 {
@@ -12,6 +13,8 @@ namespace Elos
 
 namespace Prism::Gfx
 {
+	class Mesh;
+	class Shader;
 	class Camera;
 	class ResourceFactory;
 
@@ -26,9 +29,22 @@ namespace Prism::Gfx
 		void ClearState() const;
 		void ClearBackBuffer(const f32* clearColor) const;
 		void SetViewports(const std::span<D3D11_VIEWPORT> viewports) const;
-		void Resize(u32 width, u32 height) const;
+		void SetWindowAsViewport() const;
+		void Resize(const u32 width, const u32 height) const;
 		void Present() const;
 		void Flush() const;
+		void SetBackBufferRenderTarget() const;
+		void Draw(const u32 vertexCount, const u32 startIndex) const;
+		void DrawAuto() const;
+		void DrawIndexed(const u32 indexCount, const u32 startIndexLocation, const i32 baseVertexLocation) const;
+		void DrawIndexedInstanced(const u32 indexCountPerInstance, const u32 instanceCount, const u32 startIndexLocation, const i32 baseVertexLocation, const u32 startInstanceLocation) const;
+		void DrawInstanced(const u32 vertexCountPerInstance, const u32 instanceCount, const u32 startVertexLocation, const u32 startInstanceLocation) const;
+		void DrawMesh(const Mesh& mesh, bool bindMesh = true) const;
+		void SetShader(const Shader& shader) const;
+		void SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, std::span<DX11::IBuffer* const> buffers) const;
+
+		template<typename T>
+		std::expected<void, Buffer::BufferError> UpdateConstantBuffer(ConstantBuffer<T>& constantBuffer, const T& data) const { return constantBuffer.Update(m_device->GetContext(), data); }
 
 	private:
 		void CreateDevice(const Core::Device::DeviceDesc& deviceDesc);
