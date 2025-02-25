@@ -19,6 +19,10 @@ namespace Prism::DX11
 	using IShaderResource    = ID3D11ShaderResourceView1;
 	using IVertexShader      = ID3D11VertexShader;
 	using IPixelShader       = ID3D11PixelShader;
+	using IGeometryShader    = ID3D11GeometryShader;
+	using IComputeShader     = ID3D11ComputeShader;
+	using IHullShader        = ID3D11HullShader;
+	using IDomainShader      = ID3D11DomainShader;
 	using IUnorderedAccess   = ID3D11UnorderedAccessView1;
 	using IInputLayout       = ID3D11InputLayout;
 	using ISamplerState      = ID3D11SamplerState;
