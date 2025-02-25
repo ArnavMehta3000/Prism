@@ -33,13 +33,13 @@ namespace Prism
 		void CreateConstantBuffer();
 
 	private:
-		std::unique_ptr<class Elos::Window>       m_window;
-		std::unique_ptr<Gfx::Renderer>            m_renderer;
-		std::unique_ptr<Gfx::Camera>              m_camera;
-		std::unique_ptr<Gfx::Mesh>                m_mesh;
-		std::unique_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
-		std::unique_ptr<Gfx::Shader>              m_shaderVS;
-		std::unique_ptr<Gfx::Shader>              m_shaderPS;
+		std::shared_ptr<class Elos::Window>       m_window;
+		std::shared_ptr<Gfx::Renderer>            m_renderer;
+		std::shared_ptr<Gfx::Camera>              m_camera;
+		std::shared_ptr<Gfx::Mesh>                m_mesh;
+		std::shared_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
+		std::shared_ptr<Gfx::Shader>              m_shaderVS;
+		std::shared_ptr<Gfx::Shader>              m_shaderPS;
 
 		bool m_isMouseDown = false;
 	};

@@ -10,10 +10,10 @@ namespace Prism::Gfx
 	{
 	}
 
-	std::expected<std::unique_ptr<VertexBuffer>, Buffer::BufferError> ResourceFactory::CreateVertexBuffer(
+	std::expected<std::shared_ptr<VertexBuffer>, Buffer::BufferError> ResourceFactory::CreateVertexBuffer(
 		const void* vertexData, const u32 vertexCount, const u32 sizeOfVertexType, bool isDynamic) const 
 	{
-		std::unique_ptr<VertexBuffer> buffer(new VertexBuffer(isDynamic));
+		std::shared_ptr<VertexBuffer> buffer(new VertexBuffer(isDynamic));
 
 		const D3D11_BUFFER_DESC desc
 		{
@@ -46,10 +46,10 @@ namespace Prism::Gfx
 		return buffer;
 	}
 
-	std::expected<std::unique_ptr<IndexBuffer>, Buffer::BufferError> ResourceFactory::CreateIndexBuffer(
+	std::expected<std::shared_ptr<IndexBuffer>, Buffer::BufferError> ResourceFactory::CreateIndexBuffer(
 		std::span<const u32> indices, bool isDynamic) const 
 	{
-		std::unique_ptr<IndexBuffer> buffer(new IndexBuffer(isDynamic));
+		std::shared_ptr<IndexBuffer> buffer(new IndexBuffer(isDynamic));
 
 		const D3D11_BUFFER_DESC desc
 		{
@@ -82,10 +82,10 @@ namespace Prism::Gfx
 		return buffer;
 	}
 	
-	std::expected<std::unique_ptr<Mesh>, Mesh::MeshError> ResourceFactory::CreateMesh(
+	std::expected<std::shared_ptr<Mesh>, Mesh::MeshError> ResourceFactory::CreateMesh(
 		const void* vertices, u32 vertexCount, std::span<const u32> indices, const Mesh::MeshDesc& desc) const 
 	{
-		std::unique_ptr<Mesh> mesh(new Mesh());
+		std::shared_ptr<Mesh> mesh(new Mesh());
 
 		auto vbResult = CreateVertexBuffer(vertices, vertexCount, desc.VertexStride, desc.DynamicVB);
 		if (!vbResult)

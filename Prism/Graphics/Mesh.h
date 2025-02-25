@@ -48,8 +48,8 @@ namespace Prism::Gfx
 		Mesh() noexcept = default;
 
 	private:
-		std::unique_ptr<VertexBuffer> m_vertexBuffer;
-		std::unique_ptr<IndexBuffer>  m_indexBuffer;
+		std::shared_ptr<VertexBuffer> m_vertexBuffer;
+		std::shared_ptr<IndexBuffer>  m_indexBuffer;
 		D3D11_PRIMITIVE_TOPOLOGY      m_topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	};
 }

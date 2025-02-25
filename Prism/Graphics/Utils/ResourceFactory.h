@@ -14,26 +14,26 @@ namespace Prism::Gfx
 		explicit ResourceFactory(const Core::Device* device);
 		~ResourceFactory() = default;
 
-		NODISCARD std::expected<std::unique_ptr<VertexBuffer>, Buffer::BufferError> CreateVertexBuffer(const void* vertexData, const u32 vertexCount, const u32 sizeOfVertexType, bool isDynamic = false) const;
-		NODISCARD std::expected<std::unique_ptr<IndexBuffer>, Buffer::BufferError> CreateIndexBuffer(std::span<const u32> indices, bool isDynamic = false) const;
+		NODISCARD std::expected<std::shared_ptr<VertexBuffer>, Buffer::BufferError> CreateVertexBuffer(const void* vertexData, const u32 vertexCount, const u32 sizeOfVertexType, bool isDynamic = false) const;
+		NODISCARD std::expected<std::shared_ptr<IndexBuffer>, Buffer::BufferError> CreateIndexBuffer(std::span<const u32> indices, bool isDynamic = false) const;
 		
 		template <ConstantBufferType T>
-		NODISCARD std::expected<std::unique_ptr<ConstantBuffer<T>>, Buffer::BufferError> CreateConstantBuffer() const;
+		NODISCARD std::expected<std::shared_ptr<ConstantBuffer<T>>, Buffer::BufferError> CreateConstantBuffer() const;
 
 		template <typename VertexType>
-		NODISCARD std::expected<std::unique_ptr<Mesh>, Mesh::MeshError> CreateMesh(
+		NODISCARD std::expected<std::shared_ptr<Mesh>, Mesh::MeshError> CreateMesh(
 			std::span<const VertexType> vertices,
 			std::span<const u32> indices,
 			const Mesh::MeshDesc& desc = Mesh::MeshDesc{}) const;
 		
-		NODISCARD std::expected<std::unique_ptr<Mesh>, Mesh::MeshError> CreateMesh(
+		NODISCARD std::expected<std::shared_ptr<Mesh>, Mesh::MeshError> CreateMesh(
 			const void* vertices,
 			u32 vertexCount,
 			std::span<const u32> indices,
 			const Mesh::MeshDesc& desc = Mesh::MeshDesc{}) const;
 
 		template <Shader::Type T>
-		NODISCARD std::expected<std::unique_ptr<Shader>, Shader::ShaderError> CreateShader(const fs::path& path) const;
+		NODISCARD std::expected<std::shared_ptr<Shader>, Shader::ShaderError> CreateShader(const fs::path& path) const;
 
 	private:
 		NODISCARD std::expected<void, Shader::ShaderError> CreateInputLayoutFromVS(Shader::VertexShaderData* vsData) const;
@@ -43,7 +43,7 @@ namespace Prism::Gfx
 	};
 
 	template <typename VertexType>
-	std::expected<std::unique_ptr<Mesh>, Mesh::MeshError> ResourceFactory::CreateMesh(
+	std::expected<std::shared_ptr<Mesh>, Mesh::MeshError> ResourceFactory::CreateMesh(
 		std::span<const VertexType> vertices,
 		std::span<const u32> indices,
 		const Mesh::MeshDesc& desc) const
@@ -54,9 +54,9 @@ namespace Prism::Gfx
 	}
 
 	template <ConstantBufferType T>
-	std::expected<std::unique_ptr<ConstantBuffer<T>>, Buffer::BufferError> ResourceFactory::CreateConstantBuffer() const
+	std::expected<std::shared_ptr<ConstantBuffer<T>>, Buffer::BufferError> ResourceFactory::CreateConstantBuffer() const
 	{
-		std::unique_ptr<ConstantBuffer<T>> buffer(new ConstantBuffer<T>());
+		std::shared_ptr<ConstantBuffer<T>> buffer(new ConstantBuffer<T>());
 
 		const D3D11_BUFFER_DESC desc
 		{
@@ -83,9 +83,9 @@ namespace Prism::Gfx
 	}
 
 	template <Shader::Type T>
-	std::expected<std::unique_ptr<Shader>, Shader::ShaderError> ResourceFactory::CreateShader(const fs::path& path) const
+	std::expected<std::shared_ptr<Shader>, Shader::ShaderError> ResourceFactory::CreateShader(const fs::path& path) const
 	{
-		std::unique_ptr<Shader> shader = std::make_unique<Shader>(T, path);
+		std::shared_ptr<Shader> shader = std::make_shared<Shader>(T, path);
 
 		auto ReturnError = [](auto errorType, HRESULT hr, const Elos::String& message) -> Shader::ShaderError
 		{
