@@ -91,7 +91,7 @@ set_menu {
             -- Construct the output filename with shader type suffix
             local base_name = path.basename(file)
             local shader_suffix = "_" .. string.upper(type)
-            local out_filename = base_name .. shader_suffix .. ".hlsl"
+            local out_filename = base_name .. shader_suffix .. ".cso"
             local out_file = path.join(output_subdir, out_filename)
 
             print(string.format("Processing shader (%s) as [%s]", file, string.upper(type)))
@@ -146,8 +146,6 @@ rule("CompileHLSL")
     on_build_file(function (target, sourcefile, opt)
     	import("core.base.task")
         import("core.project.depend")
-
-
 
         depend.on_changed(function ()
         	task.run("CompileShaders", {file = sourcefile})
