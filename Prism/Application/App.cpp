@@ -1,6 +1,7 @@
 #include "App.h"
 #include "Utils/Log.h"
 #include "Graphics/Utils/ResourceFactory.h"
+#include "Graphics/Utils/DebugName.h"
 #include <DirectXColors.h>
 #include <VertexTypes.h>
 #include <Elos/Window/Utils/WindowExtensions.h>
@@ -44,6 +45,8 @@ namespace Prism
 	void App::Shutdown()
 	{
 		m_wvpCBuffer.reset();
+		m_shaderVS.reset();
+		m_shaderPS.reset();
 		m_mesh.reset();
 		m_camera.reset();
 		m_renderer.reset();
@@ -196,6 +199,32 @@ namespace Prism
 		{
 			m_mesh = std::move(meshResult.value());
 		}
+
+
+		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Vertex>("Shaders/Test_VS.cso"); !shaderResult)
+		{
+			Elos::ASSERT(SUCCEEDED(shaderResult.error().ErrorCode)).Msg("Failed to create vertex shader! (Error Code: {:#x})", shaderResult.error().ErrorCode).Throw();
+		}
+		else
+		{
+			m_shaderVS = std::move(shaderResult.value());
+			m_shaderVS->SetShaderDebugName("Test_VS");
+		}
+
+		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Pixel>("Shaders/Test_PS.cso"); !shaderResult)
+		{
+			Elos::ASSERT(SUCCEEDED(shaderResult.error().ErrorCode)).Msg("Failed to create pixel shader! (Error Code: {:#x})", shaderResult.error().ErrorCode).Throw();
+		}
+		else
+		{
+			m_shaderPS = std::move(shaderResult.value());
+			m_shaderPS->SetShaderDebugName("Test_PS");
+		}
+
+#if PRISM_BUILD_DEBUG  // Shader pointers will be valid here. The above asserts should catch them
+		Elos::ASSERT(Gfx::Shader::IsValid(*m_shaderVS)).Msg("Vertex shader not valid!").Throw();
+		Elos::ASSERT(Gfx::Shader::IsValid(*m_shaderPS)).Msg("Pixel shader not valid!").Throw();
+#endif
 	}
 	
 	void App::CreateConstantBuffer()

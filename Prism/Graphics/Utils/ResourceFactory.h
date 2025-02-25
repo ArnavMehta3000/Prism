@@ -3,6 +3,7 @@
 #include "Graphics/Resources/Buffers/VertexBuffer.h"
 #include "Graphics/Resources/Buffers/IndexBuffer.h"
 #include "Graphics/Resources/Buffers/ConstantBuffer.h"
+#include "Graphics/Resources/Shaders/Shader.h"
 #include "Graphics/Mesh.h"
 
 namespace Prism::Gfx
@@ -30,6 +31,12 @@ namespace Prism::Gfx
 			u32 vertexCount,
 			std::span<const u32> indices,
 			const Mesh::MeshDesc& desc = Mesh::MeshDesc{}) const;
+
+		template <Shader::Type T>
+		NODISCARD std::expected<std::unique_ptr<Shader>, Shader::ShaderError> CreateShader(const fs::path& path) const;
+
+	private:
+		NODISCARD std::expected<void, Shader::ShaderError> CreateInputLayoutFromVS(Shader::VertexShaderData* vsData) const;
 
 	private:
 		const Core::Device* m_device;
@@ -73,5 +80,145 @@ namespace Prism::Gfx
 		}
 
 		return buffer;
+	}
+
+	template <Shader::Type T>
+	std::expected<std::unique_ptr<Shader>, Shader::ShaderError> ResourceFactory::CreateShader(const fs::path& path) const
+	{
+		std::unique_ptr<Shader> shader = std::make_unique<Shader>(T, path);
+
+		auto ReturnError = [](auto errorType, HRESULT hr, const Elos::String& message) -> Shader::ShaderError
+		{
+			return Shader::ShaderError
+			{
+				.Type      = errorType,
+				.ErrorCode = hr,
+				.Message   = message
+			};
+		};
+
+		const std::vector<byte>* bytecode = nullptr;
+
+
+		if constexpr (T == Shader::Type::Vertex)
+		{
+			Shader::VertexShaderData& vsData = shader->As<Shader::Type::Vertex>();
+
+			bytecode = &vsData.ByteCode;
+			if (bytecode->empty())
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::FileNotFound, E_FAIL,
+					"Failed to load vertex shader bytecode"));
+			}
+
+			HRESULT hr = m_device->GetDevice()->CreateVertexShader(
+				bytecode->data(),
+				bytecode->size(),
+				nullptr,
+				vsData.Shader.GetAddressOf());
+
+			if (FAILED(hr))
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::CreationFailed, E_FAIL,
+					"Failed to create vertex shader"));
+			}
+
+			// Create input layout from compiled vertex shader
+			if (auto createILResult = CreateInputLayoutFromVS(&vsData); !createILResult)
+			{
+				return std::unexpected(createILResult.error());
+			}
+		}
+		else if constexpr (T == Shader::Type::Pixel)
+		{
+			bytecode = &shader->As<Shader::Type::Pixel>().ByteCode;
+			if (bytecode->empty())
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::FileNotFound, E_FAIL,
+					"Failed to load pixel shader bytecode"));
+			}
+
+			HRESULT hr = m_device->GetDevice()->CreatePixelShader(
+				bytecode->data(),
+				bytecode->size(),
+				nullptr,
+				shader->As<Shader::Type::Pixel>().Shader.GetAddressOf());
+
+			if (FAILED(hr))
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::CreationFailed, E_FAIL,
+					"Failed to create pixel shader"));
+			}
+		}
+		else if constexpr (T == Shader::Type::Geometry)
+		{
+			bytecode = &shader->As<Shader::Type::Geometry>().ByteCode;
+			if (bytecode->empty())
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::FileNotFound, E_FAIL,
+					"Failed to load geometry shader bytecode"));
+			}
+
+			HRESULT hr = m_device->GetDevice()->CreateGeometryShader(
+				bytecode->data(),
+				bytecode->size(),
+				nullptr,
+				shader->As<Shader::Type::Geometry>().Shader.GetAddressOf());
+
+			if (FAILED(hr))
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::CreationFailed, E_FAIL,
+					"Failed to create geometry shader"));
+			}
+		}
+		else if constexpr (T == Shader::Type::Hull)
+		{
+			bytecode = &shader->As<Shader::Type::Hull>().ByteCode;
+			if (bytecode->empty())
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::FileNotFound, E_FAIL,
+					"Failed to load hull shader bytecode"));
+			}
+
+			HRESULT hr = m_device->GetDevice()->CreateHullShader(
+				bytecode->data(),
+				bytecode->size(),
+				nullptr,
+				shader->As<Shader::Type::Hull>().Shader.GetAddressOf());
+
+			if (FAILED(hr))
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::CreationFailed, E_FAIL,
+					"Failed to create hull shader"));
+			}
+		}
+		else if constexpr (T == Shader::Type::Domain)
+		{
+			bytecode = &shader->As<Shader::Type::Domain>().ByteCode;
+			if (bytecode->empty())
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::FileNotFound, E_FAIL,
+					"Failed to load domain shader bytecode"));
+			}
+
+			HRESULT hr = m_device->GetDevice()->CreateDomainShader(
+				bytecode->data(),
+				bytecode->size(),
+				nullptr,
+				shader->As<Shader::Type::Domain>().Shader.GetAddressOf());
+
+			if (FAILED(hr))
+			{
+				return std::unexpected(ReturnError(Shader::ShaderError::Type::CreationFailed, E_FAIL,
+					"Failed to create domain shader"));
+			}
+		}
+		else
+		{
+			std::unreachable();
+		}
+
+
+		return shader;
 	}
 }

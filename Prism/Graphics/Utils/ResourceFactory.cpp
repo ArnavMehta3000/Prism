@@ -1,4 +1,6 @@
 #include "ResourceFactory.h"
+#include <d3d11shader.h>
+#include <d3dcompiler.h>
 #include <Elos/Common/Assert.h>
 
 namespace Prism::Gfx
@@ -120,5 +122,116 @@ namespace Prism::Gfx
 		mesh->m_indexBuffer->IndexCount   = static_cast<u32>(indices.size());
 
 		return mesh;
+	}
+	
+	std::expected<void, Shader::ShaderError> ResourceFactory::CreateInputLayoutFromVS(Shader::VertexShaderData* vsData) const
+	{
+		// Ref: https://learn.microsoft.com/en-us/windows/win32/api/d3d11shader/nn-d3d11shader-id3d11shaderreflection
+
+#if PRISM_BUILD_DEBUG
+		Elos::ASSERT_NOT_NULL(vsData).Throw();
+#endif
+
+		if (!vsData || !vsData->Shader || vsData->ByteCode.empty())
+		{
+			return std::unexpected(Shader::ShaderError
+			{
+				.Type = Shader::ShaderError::Type::CreationFailed,
+				.ErrorCode = E_FAIL,
+				.Message = "Failed to create input layout from vertex shader"
+			});
+		}
+
+		HRESULT hr = E_FAIL;
+		ComPtr<ID3D11ShaderReflection> vsReflection;
+		hr = ::D3DReflect(
+			vsData->ByteCode.data(),
+			vsData->ByteCode.size(),
+			IID_PPV_ARGS(&vsReflection));
+		
+		if (FAILED(hr))
+		{
+			return std::unexpected(Shader::ShaderError
+			{
+				.Type = Shader::ShaderError::Type::CreationFailed,
+				.ErrorCode = hr,
+				.Message = "Failed to reflect vertex shader"
+			});
+		}
+
+		D3D11_SHADER_DESC desc{};
+		if (FAILED(vsReflection->GetDesc(&desc)))
+		{
+			return std::unexpected(Shader::ShaderError
+			{
+				.Type = Shader::ShaderError::Type::CreationFailed,
+				.ErrorCode = hr,
+				.Message = "Failed to get vertex shader description"
+			});
+		}
+
+		std::vector<D3D11_INPUT_ELEMENT_DESC> inputLayout;
+		for (u32 i = 0; i < desc.InputParameters; i++)
+		{
+			// Get input parameter at index
+			D3D11_SIGNATURE_PARAMETER_DESC paramDesc{};
+			vsReflection->GetInputParameterDesc(i, &paramDesc);
+
+			// Create input element descripton
+			D3D11_INPUT_ELEMENT_DESC elementDesc{};
+			elementDesc.SemanticName         = paramDesc.SemanticName;
+			elementDesc.SemanticIndex        = paramDesc.SemanticIndex;
+			elementDesc.InputSlot            = 0;
+			elementDesc.AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
+			elementDesc.InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
+			elementDesc.InstanceDataStepRate = 0;
+
+			// Determine DXGI format
+			if (paramDesc.Mask == 1)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)       elementDesc.Format = DXGI_FORMAT_R32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)  elementDesc.Format = DXGI_FORMAT_R32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) elementDesc.Format = DXGI_FORMAT_R32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 3)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)       elementDesc.Format = DXGI_FORMAT_R32G32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)  elementDesc.Format = DXGI_FORMAT_R32G32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) elementDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 7)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)       elementDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)  elementDesc.Format = DXGI_FORMAT_R32G32B32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) elementDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 15)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)       elementDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)  elementDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) elementDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			}
+
+			inputLayout.push_back(elementDesc);
+		}
+
+		hr = m_device->GetDevice()->CreateInputLayout(
+			inputLayout.data(),
+			static_cast<u32>(inputLayout.size()),
+			vsData->ByteCode.data(),
+			vsData->ByteCode.size(),
+			&vsData->Layout);
+
+		if (FAILED(hr))
+		{
+			return std::unexpected(Shader::ShaderError
+			{
+				.Type = Shader::ShaderError::Type::CreationFailed,
+				.ErrorCode = hr,
+				.Message = "Failed to create input layout from vertex shader"
+			});
+		}
+
+		return{};
 	}
 }
