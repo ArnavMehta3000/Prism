@@ -74,8 +74,9 @@ namespace Prism
 		
 		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
 		{
-			Log::Error("Failed to update constant buffer");
-			return;
+#ifdef PRISM_BUILD_DEBUG
+			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
+#endif
 		}
 
 		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
