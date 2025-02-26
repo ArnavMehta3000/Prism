@@ -21,7 +21,8 @@ namespace Prism::Gfx
 	class Renderer
 	{
 	public:
-		Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc, const Core::SwapChain::SwapChainDesc& swapChainDesc);
+		Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc, 
+			const Core::SwapChain::SwapChainDesc& swapChainDesc, const DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 		~Renderer();
 
 		NODISCARD const ResourceFactory& GetResourceFactory() const { return *m_resourceFactory; }
@@ -29,8 +30,9 @@ namespace Prism::Gfx
 		void ClearState() const;
 		void ClearBackBuffer(const f32* clearColor) const;
 		void SetViewports(const std::span<D3D11_VIEWPORT> viewports) const;
+		void ClearDepthStencilBuffer(const u32 flag, const f32 depth = 1.0f, const u8 stencil = 0) const;
 		void SetWindowAsViewport() const;
-		void Resize(const u32 width, const u32 height) const;
+		void Resize(const u32 width, const u32 height);
 		void Present() const;
 		void Flush() const;
 		void SetBackBufferRenderTarget() const;
@@ -42,6 +44,10 @@ namespace Prism::Gfx
 		void DrawMesh(const Mesh& mesh, bool bindMesh = true) const;
 		void SetShader(const Shader& shader) const;
 		void SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, std::span<DX11::IBuffer* const> buffers) const;
+		void SetDepthStencilState(DX11::IDepthStencilState* state, u32 stencilRef = 0) const;
+		void SetRasterizerState(DX11::IRasterizerState* state) const;
+		void SetSolidRenderState() const;
+		void SetWireframeRenderState() const;
 
 		template<typename T>
 		std::expected<void, Buffer::BufferError> UpdateConstantBuffer(ConstantBuffer<T>& constantBuffer, const T& data) const { return constantBuffer.Update(m_device->GetContext(), data); }
@@ -49,14 +55,22 @@ namespace Prism::Gfx
 	private:
 		void CreateDevice(const Core::Device::DeviceDesc& deviceDesc);
 		void CreateSwapChain(const Core::SwapChain::SwapChainDesc& swapChainDesc);
+		void CreateDefaultStates();
+		std::expected<void, Core::SwapChain::SwapChainError> CreateDepthStencilBuffer();
 		
 		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
 		NODISCARD inline Core::SwapChain* GetSwapChain() const noexcept { return m_swapChain.get(); }
 
 	private:
+		DXGI_FORMAT                      m_depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		Elos::Window&                    m_window;
 		std::unique_ptr<ResourceFactory> m_resourceFactory;
 		std::unique_ptr<Core::Device>    m_device;
 		std::unique_ptr<Core::SwapChain> m_swapChain;
+		ComPtr<DX11::IDepthStencilState> m_defaultDepthStencilState;
+		ComPtr<DX11::IRasterizerState>   m_solidRasterizerState;
+		ComPtr<DX11::IRasterizerState>   m_wireframeRasterizerState;
+		ComPtr<DX11::ITexture2D>         m_depthStencilBuffer;
+		ComPtr<DX11::IDepthStencil>      m_depthStencilView;
 	};
 }

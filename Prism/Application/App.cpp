@@ -74,34 +74,40 @@ namespace Prism
 		
 		m_renderer->ClearState();
 		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
+		m_renderer->ClearDepthStencilBuffer(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
 
 		m_renderer->SetBackBufferRenderTarget();
 		m_renderer->SetWindowAsViewport();
+		m_renderer->SetSolidRenderState();
 
-		m_sceneManager->Render(*m_renderer, *m_camera);
+		//m_sceneManager->Render(*m_renderer, *m_camera);
+
+		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
+		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
 
 		// Update CB
-//		WVP wvp
-//		{
-//			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
-//			.View       = m_camera->GetViewMatrix().Transpose(),
-//			.Projection = m_camera->GetProjectionMatrix().Transpose()
-//		};
-//		
-//		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
-//		{
-//#ifdef PRISM_BUILD_DEBUG
-//			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
-//#endif
-//		}
-//
-//		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
-//		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
-//		
-//		// Draw the mesh
-//		m_renderer->SetShader(*m_shaderVS);
-//		m_renderer->SetShader(*m_shaderPS);
-//		m_renderer->DrawMesh(*m_mesh);
+		WVP wvp
+		{
+			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
+			.View       = m_camera->GetViewMatrix().Transpose(),
+			.Projection = m_camera->GetProjectionMatrix().Transpose()
+		};
+		
+		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
+		{
+#ifdef PRISM_BUILD_DEBUG
+			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
+#endif
+		}
+		
+		// Draw the mesh
+		m_renderer->SetShader(*m_shaderVS);
+		m_renderer->SetShader(*m_shaderPS);
+		m_renderer->DrawMesh(*m_mesh);
+
+		wvp.World = Matrix::CreateTranslation(Vector3(1.5f, 1.5f, 1.5f)).Transpose();
+		std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
+		m_renderer->DrawMesh(*m_mesh);
 
 		m_renderer->Present();
 	}
@@ -139,6 +145,15 @@ namespace Prism
 				Log::Info("Resetting camera");
 				m_camera->SetPosition(Vector3(0, 0, 10));
 				m_camera->SetOrientation(Quaternion::Identity);
+			}
+
+			if (e.Key == Elos::KeyCode::C)
+			{
+				const auto currentProjType = m_camera->GetProjectionType();
+				const auto nextProjType = currentProjType == Gfx::Camera::ProjectionType::Perspective ? 
+					Gfx::Camera::ProjectionType::Orthographic : Gfx::Camera::ProjectionType::Perspective;
+				
+				m_camera->SetProjectionType(nextProjType);
 			}
 		};
 
@@ -227,7 +242,7 @@ namespace Prism
 			.Fullscreen   = false
 		};
 
-		m_renderer = std::make_unique<Gfx::Renderer>(*m_window, deviceDesc, swapChainDesc);
+		m_renderer = std::make_unique<Gfx::Renderer>(*m_window, deviceDesc, swapChainDesc, DXGI_FORMAT_R32_TYPELESS);
 
 		// Create camera
 		Gfx::Camera::CameraDesc cameraDesc;
