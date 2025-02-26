@@ -1,12 +1,14 @@
 #include "App.h"
+#include "Application/Scene/SceneNodeFactory.h"
+#include "Application/Scene/AnimatedSceneNode.h"
 #include "Utils/Log.h"
 #include "Graphics/Utils/ResourceFactory.h"
-#include "Graphics/Utils/DebugName.h"
 #include <DirectXColors.h>
 #include <VertexTypes.h>
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <array>
+#include <chrono>
 
 namespace Prism
 {
@@ -16,10 +18,16 @@ namespace Prism
 
 		Log::Info("Starting App");
 
+		auto lastTime = std::chrono::high_resolution_clock::now();
+
 		while (m_window->IsOpen())
 		{
+			const auto currentTime = std::chrono::high_resolution_clock::now();
+			const f32 deltaTime = std::chrono::duration<f32>(currentTime - lastTime).count();
+			lastTime = currentTime;
+			
 			ProcessWindowEvents();
-			Tick();
+			Tick(deltaTime);
 		}
 		Log::Info("Stopping App");
 
@@ -40,10 +48,14 @@ namespace Prism
 
 		Log::Info("Creating constant buffer");
 		CreateConstantBuffer();
+
+		Log::Info("Setting up scene");
+		SetupScene();
 	}
 
 	void App::Shutdown()
 	{
+		m_sceneManager.reset();
 		m_wvpCBuffer.reset();
 		m_shaderVS.reset();
 		m_shaderPS.reset();
@@ -53,8 +65,10 @@ namespace Prism
 		m_window.reset();
 	}
 
-	void App::Tick()
+	void App::Tick(const f32 deltaTime)
 	{
+		m_sceneManager->Update(deltaTime);
+
 		m_camera->SetLookAt(Vector3::Zero);
 		m_camera->Update();
 		
@@ -64,28 +78,30 @@ namespace Prism
 		m_renderer->SetBackBufferRenderTarget();
 		m_renderer->SetWindowAsViewport();
 
-		// Update CB
-		WVP wvp
-		{
-			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
-			.View       = m_camera->GetViewMatrix().Transpose(),
-			.Projection = m_camera->GetProjectionMatrix().Transpose()
-		};
-		
-		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
-		{
-#ifdef PRISM_BUILD_DEBUG
-			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
-#endif
-		}
+		m_sceneManager->Render(*m_renderer, *m_camera);
 
-		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
-		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
-		
-		// Draw the mesh
-		m_renderer->SetShader(*m_shaderVS);
-		m_renderer->SetShader(*m_shaderPS);
-		m_renderer->DrawMesh(*m_mesh);
+		// Update CB
+//		WVP wvp
+//		{
+//			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
+//			.View       = m_camera->GetViewMatrix().Transpose(),
+//			.Projection = m_camera->GetProjectionMatrix().Transpose()
+//		};
+//		
+//		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
+//		{
+//#ifdef PRISM_BUILD_DEBUG
+//			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
+//#endif
+//		}
+//
+//		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
+//		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
+//		
+//		// Draw the mesh
+//		m_renderer->SetShader(*m_shaderVS);
+//		m_renderer->SetShader(*m_shaderPS);
+//		m_renderer->DrawMesh(*m_mesh);
 
 		m_renderer->Present();
 	}
@@ -312,5 +328,50 @@ namespace Prism
 		{
 			m_wvpCBuffer = std::move(cbResult.value());
 		}
+	}
+	
+	void App::SetupScene()
+	{
+		m_sceneManager = std::make_unique<SceneManager>(m_renderer->GetResourceFactory());
+
+		Scene* mainScene = m_sceneManager->CreateScene("MainScene");
+
+		if (!mainScene->Init(*m_renderer))
+		{
+			Log::Error("Failed to initialize main scene!");
+			return;
+		}
+
+		mainScene->SetVertexShader(m_shaderVS.get());
+		mainScene->SetPixelShader(m_shaderPS.get());
+
+		///SceneNodeFactory::CreateSolarSystem(*mainScene, m_mesh);
+
+
+
+
+
+		auto complexNode = std::make_unique<AnimatedSceneNode>("Complex");
+		AnimatedSceneNode* nodePtr = complexNode.get();
+
+		// Get standard animation functions
+		auto rotateAnim = AnimatedSceneNode::CreateRotationAnimation(0.5f, Vector3::Up);
+		auto oscillateAnim = AnimatedSceneNode::CreateOscillationAnimation(1.0f, 0.5f, Vector3::Right);
+
+		// Combine animations
+		auto combinedAnim = [rotateAnim, oscillateAnim](AnimatedSceneNode& node, float deltaTime) 
+		{
+			rotateAnim(node, deltaTime);
+			oscillateAnim(node, deltaTime);
+		};
+
+		// Set the combined animation
+		SceneNode::RenderData rd{ .Mesh = m_mesh };
+		nodePtr->SetRenderData(rd);
+		nodePtr->SetAnimationFunction(combinedAnim);
+		mainScene->GetRootNode()->AddChild(std::move(complexNode));
+
+
+		m_sceneManager->SetActiveScene("MainScene");
 	}
 }

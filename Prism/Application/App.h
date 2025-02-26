@@ -1,5 +1,8 @@
 #pragma once
 #include "StandardTypes.h"
+#include "Application/WVP.h"
+#include "Application/Scene/SceneManager.h"
+#include "Application/Scene/Scene.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Camera.h"
 #include "Graphics/Mesh.h"
@@ -9,13 +12,6 @@
 
 namespace Prism
 {
-	struct WVP
-	{
-		Matrix World;
-		Matrix View;
-		Matrix Projection;
-	};
-
 	class App
 	{
 	public:
@@ -24,18 +20,21 @@ namespace Prism
 	private:
 		void Init();
 		void Shutdown();
-		void Tick();
+		void Tick(const f32 deltaTime);
 
 		void CreateMainWindow();
 		void ProcessWindowEvents();
 		void CreateRenderer();
 		void CreateResources();
 		void CreateConstantBuffer();
+		void SetupScene();
 
 	private:
 		std::shared_ptr<class Elos::Window>       m_window;
 		std::shared_ptr<Gfx::Renderer>            m_renderer;
 		std::shared_ptr<Gfx::Camera>              m_camera;
+		std::unique_ptr<SceneManager>             m_sceneManager;
+
 		std::shared_ptr<Gfx::Mesh>                m_mesh;
 		std::shared_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
 		std::shared_ptr<Gfx::Shader>              m_shaderVS;
