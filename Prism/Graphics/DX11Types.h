@@ -28,7 +28,7 @@ namespace Prism::DX11
 	using ISamplerState      = ID3D11SamplerState;
 	using IBlendState        = ID3D11BlendState;
 	using IDepthStencilState = ID3D11DepthStencilState;
-	using IRasterizerState   = ID3D11RasterizerState;
+	using IRasterizerState   = ID3D11RasterizerState1;
 	using IBuffer            = ID3D11Buffer;
 	using ISwapChain         = IDXGISwapChain4;
 	using IBlob              = ID3DBlob;

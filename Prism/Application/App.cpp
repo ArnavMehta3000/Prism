@@ -251,6 +251,8 @@ namespace Prism
 		cameraDesc.VerticalFOV = 60.0f;
 		cameraDesc.OrthoWidth  = 20.0f;
 		cameraDesc.OrthoHeight = 11.25f;
+		cameraDesc.NearPlane = 0.01f;
+		
 		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
 	}
 	
@@ -261,30 +263,24 @@ namespace Prism
 #pragma region Create mesh
 		const std::array vertices =
 		{
-			VertexPositionColor(XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1, 0, 0, 1)),  // 0
-			VertexPositionColor(XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT4(0, 1, 0, 1)),  // 1
-			VertexPositionColor(XMFLOAT3(1.0f,  1.0f, -1.0f),  XMFLOAT4(0, 0, 1, 1)),  // 2
-			VertexPositionColor(XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT4(1, 1, 0, 1)),  // 3
-			VertexPositionColor(XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT4(1, 0, 1, 1)),  // 4
-			VertexPositionColor(XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT4(0, 1, 1, 1)),  // 5
-			VertexPositionColor(XMFLOAT3(1.0f,  1.0f,  1.0f),  XMFLOAT4(1, 1, 1, 1)),  // 6
-			VertexPositionColor(XMFLOAT3(1.0f, -1.0f,  1.0f),  XMFLOAT4(0, 0, 0, 1))   // 7
+			VertexPositionColor(XMFLOAT3(-1, -1, -1), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(1, -1, -1), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(1, 1, -1), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(-1, 1, -1), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(-1, -1, 1), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(1, -1, 1), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(1, 1, 1), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)),
+			VertexPositionColor(XMFLOAT3(-1, 1, 1), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)),
 		};
-
+		
 		constexpr std::array<u32, 36> indices =
 		{
-			// Front face (z = -1)
-			0, 1, 2, 0, 2, 3,
-			// Back face (z = +1)
-			4, 6, 5, 4, 7, 6,
-			// Left face (x = -1)
-			4, 5, 1, 4, 1, 0,
-			// Right face (x = +1)
-			3, 2, 6, 3, 6, 7,
-			// Top face (y = +1)
-			1, 5, 6, 1, 6, 2,
-			// Bottom face (y = -1)
-			4, 0, 3, 4, 3, 7
+			0, 1, 3, 3, 1, 2,
+			1, 5, 2, 2, 5, 6,
+			5, 4, 6, 6, 4, 7,
+			4, 0, 7, 7, 0, 3,
+			3, 2, 7, 7, 2, 6,
+			4, 5, 0, 0, 5, 1
 		};
 
 		Gfx::Mesh::MeshDesc meshDesc{};

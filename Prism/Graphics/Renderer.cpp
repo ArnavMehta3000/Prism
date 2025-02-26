@@ -344,7 +344,6 @@ namespace Prism::Gfx
 	{
 		// Create default depth stencil state
 		D3D11_DEPTH_STENCIL_DESC dsDesc{};
-
 		dsDesc.DepthEnable                  = true;
 		dsDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ALL;
 		dsDesc.DepthFunc                    = D3D11_COMPARISON_LESS;
@@ -367,29 +366,20 @@ namespace Prism::Gfx
 		}
 
 		// Create solid rasterizer state
-		D3D11_RASTERIZER_DESC solidRastDesc{};
-		solidRastDesc.FillMode              = D3D11_FILL_SOLID;
-		solidRastDesc.CullMode              = D3D11_CULL_BACK;
-		solidRastDesc.FrontCounterClockwise = FALSE;
-		solidRastDesc.DepthBias             = 0;
-		solidRastDesc.DepthBiasClamp        = 0.0f;
-		solidRastDesc.SlopeScaledDepthBias  = 0.0f;
-		solidRastDesc.DepthClipEnable       = TRUE;
-		solidRastDesc.ScissorEnable         = FALSE;
-		solidRastDesc.MultisampleEnable     = FALSE;
-		solidRastDesc.AntialiasedLineEnable = FALSE;
-
-		hr = m_device->GetDevice()->CreateRasterizerState(&solidRastDesc, &m_solidRasterizerState);
+		CD3D11_RASTERIZER_DESC1 solidRastDesc = CD3D11_RASTERIZER_DESC1(CD3D11_DEFAULT());
+		solidRastDesc.FillMode = D3D11_FILL_SOLID;
+		solidRastDesc.CullMode = D3D11_CULL_BACK;
+		hr = m_device->GetDevice()->CreateRasterizerState1(&solidRastDesc, &m_solidRasterizerState);
 		if (FAILED(hr))
 		{
 			Log::Error("Failed to create solid rasterizer state. Error code: {:#x}", hr);
 		}
 
 		// Create wireframe rasterizer state
-		D3D11_RASTERIZER_DESC wireframeRastDesc = solidRastDesc;
+		CD3D11_RASTERIZER_DESC1 wireframeRastDesc = solidRastDesc;
 		wireframeRastDesc.FillMode = D3D11_FILL_WIREFRAME;
 
-		hr = m_device->GetDevice()->CreateRasterizerState(&wireframeRastDesc, &m_wireframeRasterizerState);
+		hr = m_device->GetDevice()->CreateRasterizerState1(&wireframeRastDesc, &m_wireframeRasterizerState);
 		if (FAILED(hr))
 		{
 			Log::Error("Failed to create wireframe rasterizer state. Error code: {:#x}", hr);
@@ -423,21 +413,21 @@ namespace Prism::Gfx
 			if (FAILED(hr))
 			{
 				return std::unexpected(Core::SwapChain::SwapChainError
-					{
-						.Type = Core::SwapChain::SwapChainError::Type::CreateRTVFailed,
-						.ErrorCode = hr,
-						.Message = "Failed to create depth stencil buffer"
-					});
+				{
+					.Type = Core::SwapChain::SwapChainError::Type::CreateRTVFailed,
+					.ErrorCode = hr,
+					.Message = "Failed to create depth stencil buffer"
+				});
 			}
 
 			if (FAILED(depthTexture.As(&m_depthStencilBuffer)))
 			{
 				return std::unexpected(Core::SwapChain::SwapChainError
-					{
-						.Type = Core::SwapChain::SwapChainError::Type::CreateRTVFailed,
-						.ErrorCode = hr,
-						.Message = "Failed to create depth stencil buffer"
-					});
+				{
+					.Type = Core::SwapChain::SwapChainError::Type::CreateRTVFailed,
+					.ErrorCode = hr,
+					.Message = "Failed to create depth stencil buffer"
+				});
 			}
 			SetDebugObjectName(m_depthStencilBuffer, "DX11DepthStencilBuffer");
 		}
