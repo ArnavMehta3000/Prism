@@ -3,8 +3,8 @@
 #include "Application/Scene/AnimatedSceneNode.h"
 #include "Utils/Log.h"
 #include "Graphics/Utils/ResourceFactory.h"
+#include "Graphics/Primitives.h"
 #include <DirectXColors.h>
-#include <VertexTypes.h>
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <array>
@@ -256,34 +256,16 @@ namespace Prism
 		using namespace DirectX;
 
 #pragma region Create mesh
-		const std::array vertices =
-		{
-			VertexPositionColor(XMFLOAT3(-1, -1, -1), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(1, -1, -1), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(1, 1, -1), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(-1, 1, -1), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(-1, -1, 1), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(1, -1, 1), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(1, 1, 1), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)),
-			VertexPositionColor(XMFLOAT3(-1, 1, 1), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)),
-		};
-		
-		constexpr std::array<u32, 36> indices =
-		{
-			0, 1, 3, 3, 1, 2,
-			1, 5, 2, 2, 5, 6,
-			5, 4, 6, 6, 4, 7,
-			4, 0, 7, 7, 0, 3,
-			3, 2, 7, 7, 2, 6,
-			4, 5, 0, 0, 5, 1
-		};
+		const auto& vertices = Gfx::Primitives::Cube::VertexPositionColor;
+		const auto& indices  = Gfx::Primitives::Cube::Indices;
+		using VertexType     = Gfx::Primitives::Cube::VertexTypes::PositionColor;
 
 		Gfx::Mesh::MeshDesc meshDesc{};
-		meshDesc.VertexStride = sizeof(VertexPositionColor);
+		meshDesc.VertexStride = sizeof(VertexType);
 
 		const auto& resourceFactory = m_renderer->GetResourceFactory();
 
-		if (auto meshResult = resourceFactory.CreateMesh<VertexPositionColor>(vertices, indices, meshDesc); !meshResult)
+		if (auto meshResult = resourceFactory.CreateMesh<VertexType>(vertices, indices, meshDesc); !meshResult)
 		{
 			Elos::ASSERT(SUCCEEDED(meshResult.error().ErrorCode)).Msg("Failed to create mesh! (Error Code: {:#x})", meshResult.error().ErrorCode).Throw();
 		}
