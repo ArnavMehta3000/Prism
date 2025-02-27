@@ -54,6 +54,7 @@ namespace Prism::Gfx
 			m_up.Normalize();
 		}
 
+		SetZoomLevel(1.0f);
 		UpdateViewMatrix();
 		UpdateProjectionMatrix();
 	}
@@ -261,13 +262,18 @@ namespace Prism::Gfx
 	{
 		m_zoomLevel = std::clamp(newZoomLevel, MinZoomLevel, MaxZoomLevel);
 
-		// Calculate FOV and ortho height based on zoom level
-		// Inverse relationship: higher zoom level = smaller FOV / smaller ortho height
+		// Calculate FOV based on zoom level (smaller FOV = more zoom)
 		f32 zoomFactor = 1.0f / m_zoomLevel;
-
 		m_fovY = std::clamp(DefaultFOV * zoomFactor, MinFOV, MaxFOV);
 
-		m_orthoHeight = std::clamp(DefaultOrthoHeight * zoomFactor, MinOrthoHeight, MaxOrthoHeight);
+		// Calculate equivalent orthographic height
+		// This formula maintains consistent visual size between projection modes
+		// tan(fovY/2) * distance * 2 = height of visible area at distance
+		f32 distanceToOrigin = m_position.Length();
+		f32 visibleHeightAtDistance = 2.0f * distanceToOrigin * tanf(DirectX::XMConvertToRadians(m_fovY) / 2.0f);
+
+		// Set ortho height to match the perspective view's visible area
+		m_orthoHeight = std::clamp(visibleHeightAtDistance, MinOrthoHeight, MaxOrthoHeight);
 		m_orthoWidth = m_orthoHeight * m_aspectRatio;
 
 		m_projDirty = true;
@@ -275,19 +281,41 @@ namespace Prism::Gfx
 
 	void Camera::ZoomBy(f32 zoomDelta)
 	{
-		// Exponential zoom for more natural feel
-		// Positive delta zooms in, negative delta zooms out
-		f32 newZoomLevel;
+		const f32 normalizedZoom = (m_zoomLevel - MinZoomLevel) / (MaxZoomLevel - MinZoomLevel);
+		static constexpr f32 threshold = (0.5f - MinZoomLevel) / (MaxZoomLevel - MinZoomLevel);  // Zoom value to switch speeds
+		
+		// Create an asymmetric curve to counter the exponential effect
 
-		if (zoomDelta > 0.0f)
+		f32 speedFactor;
+		if (normalizedZoom < threshold)  // Zoom lew
 		{
-			// Zoom in: multiply by zoom factor for smoother zoom at higher levels
-			newZoomLevel = m_zoomLevel * (1.0f + zoomDelta * 0.1f);
+			// Lower half - slower to zoom out (higher speedFactor)
+			speedFactor = 0.3f + 1.0f * (normalizedZoom * 1.5f);
+		}
+		else 
+		{
+			// Upper half - standard parabolic curve
+			speedFactor = 4.0f * (normalizedZoom * (1.0f - normalizedZoom));
+		}
+
+		// Ensure a reasonable minimum speed
+		speedFactor = std::max(0.2f, speedFactor);
+
+		// Adjust multiplier based on zoom level for balanced feel
+		const f32 adaptiveMultiplier = 0.1f * std::sqrt(m_zoomLevel / MaxZoomLevel);
+
+		f32 newZoomLevel;
+		if (zoomDelta > 0.0f) 
+		{
+			// Zoom in - multiply by factor for exponential growth
+			newZoomLevel = m_zoomLevel * (1.0f + (zoomDelta * adaptiveMultiplier * speedFactor));
 		}
 		else
 		{
-			// Zoom out: divide by zoom factor for smoother zoom at lower levels
-			newZoomLevel = m_zoomLevel / (1.0f - zoomDelta * 0.1f);
+			// Zoom out - divide by factor for exponential reduction
+			// Increase sensitivity at lower zoom levels
+			f32 outFactor = adaptiveMultiplier * (1.0f + (1.0f - normalizedZoom));
+			newZoomLevel = m_zoomLevel / (1.0f - (zoomDelta * outFactor * speedFactor));
 		}
 
 		SetZoomLevel(newZoomLevel);

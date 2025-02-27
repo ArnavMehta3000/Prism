@@ -197,15 +197,16 @@ namespace Prism
 				m_isMouseDown = false;
 			}
 		};
-
+		static float blendValue = 1.0f;
 		const auto OnWindowMouseWheel = [this](const Elos::Event::MouseWheelScrolled& e)
 		{
 			if (e.Wheel == Elos::KeyCode::MouseWheel::Vertical)
 			{
 				if (m_camera)
 				{
-					m_camera->ZoomBy(e.Delta * 0.05f);
-					Log::Warn("Camera Zoom {}\t Wheel Delta: {}", m_camera->GetZoomLevel(), e.Delta);
+					//m_camera->ZoomBy(e.Delta);
+					blendValue = std::clamp(blendValue += e.Delta * 0.05f, 0.0f, 1.0f);
+					m_camera->SetProjectionType(Gfx::Camera::ProjectionType::Perspective, blendValue);
 				}
 			}
 		};
@@ -246,14 +247,9 @@ namespace Prism
 
 		// Create camera
 		Gfx::Camera::CameraDesc cameraDesc;
-		cameraDesc.Position    = Vector3(0, 0, 10);
 		cameraDesc.AspectRatio = static_cast<f32>(windowSize.Width) / static_cast<f32>(windowSize.Height);
-		cameraDesc.VerticalFOV = 60.0f;
-		cameraDesc.OrthoWidth  = 20.0f;
-		cameraDesc.OrthoHeight = 11.25f;
-		cameraDesc.NearPlane = 0.01f;
-		
 		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
+		m_camera->SetZoomLevel(2.5f);
 	}
 	
 	void App::CreateResources()
@@ -357,10 +353,6 @@ namespace Prism
 		mainScene->SetPixelShader(m_shaderPS.get());
 
 		///SceneNodeFactory::CreateSolarSystem(*mainScene, m_mesh);
-
-
-
-
 
 		auto complexNode = std::make_unique<AnimatedSceneNode>("Complex");
 		AnimatedSceneNode* nodePtr = complexNode.get();
