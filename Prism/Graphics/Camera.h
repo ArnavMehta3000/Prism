@@ -14,18 +14,18 @@ namespace Prism::Gfx
 		constexpr static f32 MinZoomLevel       = 0.1f;   // 10x zoom out
 		constexpr static f32 MaxZoomLevel       = 15.0f;  // 15x zoom in
 		constexpr static f32 DefaultFOV         = 60.0f;
-		constexpr static f32 DefaultOrthoHeight = 20.0f;
+		constexpr static f32 DefaultOrthoHeight = 11.25f;
 
 		enum class ProjectionType { Perspective, Orthographic };
 
 		struct CameraDesc
 		{
-			f32 VerticalFOV           = 45.0f;
+			f32 VerticalFOV           = DefaultFOV;
 			f32 AspectRatio           = 16.0f / 9.0f;
 			f32 NearPlane             = 0.3f;
 			f32 FarPlane              = 1000.0f;
 			f32 OrthoWidth            = 20.0f;
-			f32 OrthoHeight           = 11.25;
+			f32 OrthoHeight           = DefaultOrthoHeight;
 			Vector3 Position          = Vector3(0.0f, 5.0f, 15.0f);
 			Vector3 LookAt            = Vector3::Zero;
 			Vector3 UpVector          = Vector3::Up;

@@ -249,7 +249,6 @@ namespace Prism
 		Gfx::Camera::CameraDesc cameraDesc;
 		cameraDesc.AspectRatio = static_cast<f32>(windowSize.Width) / static_cast<f32>(windowSize.Height);
 		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
-		m_camera->SetZoomLevel(2.5f);
 	}
 	
 	void App::CreateResources()
