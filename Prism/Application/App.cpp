@@ -1,13 +1,10 @@
 #include "App.h"
-#include "Application/Scene/SceneNodeFactory.h"
-#include "Application/Scene/AnimatedSceneNode.h"
 #include "Utils/Log.h"
 #include "Graphics/Utils/ResourceFactory.h"
 #include "Graphics/Primitives.h"
-#include <DirectXColors.h>
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
-#include <array>
+#include <DirectXColors.h>
 #include <chrono>
 
 namespace Prism
@@ -23,8 +20,8 @@ namespace Prism
 		while (m_window->IsOpen())
 		{
 			const auto currentTime = std::chrono::high_resolution_clock::now();
-			const f32 deltaTime = std::chrono::duration<f32>(currentTime - lastTime).count();
-			lastTime = currentTime;
+			const f32 deltaTime    = std::chrono::duration<f32>(currentTime - lastTime).count();
+			lastTime               = currentTime;
 			
 			ProcessWindowEvents();
 			Tick(deltaTime);
@@ -49,13 +46,11 @@ namespace Prism
 		Log::Info("Creating constant buffer");
 		CreateConstantBuffer();
 
-		Log::Info("Setting up scene");
-		SetupScene();
+		CreateScene();
 	}
 
 	void App::Shutdown()
 	{
-		m_sceneManager.reset();
 		m_wvpCBuffer.reset();
 		m_shaderVS.reset();
 		m_shaderPS.reset();
@@ -65,10 +60,8 @@ namespace Prism
 		m_window.reset();
 	}
 
-	void App::Tick(const f32 deltaTime)
+	void App::Tick(MAYBE_UNUSED const f32 deltaTime)
 	{
-		m_sceneManager->Update(deltaTime);
-
 		m_camera->SetLookAt(Vector3::Zero);
 		m_camera->Update();
 		
@@ -80,7 +73,6 @@ namespace Prism
 		m_renderer->SetWindowAsViewport();
 		m_renderer->SetSolidRenderState();
 
-		//m_sceneManager->Render(*m_renderer, *m_camera);
 
 		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
 		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
@@ -100,14 +92,23 @@ namespace Prism
 #endif
 		}
 		
-		// Draw the mesh
+		//// Draw the mesh
 		m_renderer->SetShader(*m_shaderVS);
 		m_renderer->SetShader(*m_shaderPS);
-		m_renderer->DrawMesh(*m_mesh);
 
-		wvp.World = Matrix::CreateTranslation(Vector3(1.5f, 1.5f, 1.5f)).Transpose();
-		std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
-		m_renderer->DrawMesh(*m_mesh);
+		m_sceneGraph.GetRoot().ForEach([&](Node& node)
+		{
+			if (auto result = node.GetProperty<Vector3>(); result)
+			{
+				wvp.World = Matrix::CreateTranslation(*result).Transpose();
+				std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
+			}
+
+			if (auto result = node.GetProperty<Gfx::Mesh>(); result)
+			{
+				m_renderer->DrawMesh(*result);
+			}
+		});
 
 		m_renderer->Present();
 	}
@@ -318,44 +319,17 @@ namespace Prism
 		}
 	}
 	
-	void App::SetupScene()
+	void App::CreateScene()
 	{
-		m_sceneManager = std::make_unique<SceneManager>(m_renderer->GetResourceFactory());
+		Node& cube1 = m_sceneGraph.GetRoot().CreateChild("Main Cube");
+		cube1.SetProperty(*m_mesh);
+		cube1.SetProperty(Vector3::Zero);
 
-		Scene* mainScene = m_sceneManager->CreateScene("MainScene");
+		Node& cube2 = m_sceneGraph.GetRoot().CreateChild("Second Cube");
+		cube2.SetProperty(*m_mesh);
+		cube2.SetProperty(Vector3(2, 2, 2));
 
-		if (!mainScene->Init(*m_renderer))
-		{
-			Log::Error("Failed to initialize main scene!");
-			return;
-		}
-
-		mainScene->SetVertexShader(m_shaderVS.get());
-		mainScene->SetPixelShader(m_shaderPS.get());
-
-		///SceneNodeFactory::CreateSolarSystem(*mainScene, m_mesh);
-
-		auto complexNode = std::make_unique<AnimatedSceneNode>("Complex");
-		AnimatedSceneNode* nodePtr = complexNode.get();
-
-		// Get standard animation functions
-		auto rotateAnim = AnimatedSceneNode::CreateRotationAnimation(0.5f, Vector3::Up);
-		auto oscillateAnim = AnimatedSceneNode::CreateOscillationAnimation(1.0f, 0.5f, Vector3::Right);
-
-		// Combine animations
-		auto combinedAnim = [rotateAnim, oscillateAnim](AnimatedSceneNode& node, float deltaTime) 
-		{
-			rotateAnim(node, deltaTime);
-			oscillateAnim(node, deltaTime);
-		};
-
-		// Set the combined animation
-		SceneNode::RenderData rd{ .Mesh = m_mesh };
-		nodePtr->SetRenderData(rd);
-		nodePtr->SetAnimationFunction(combinedAnim);
-		mainScene->GetRootNode()->AddChild(std::move(complexNode));
-
-
-		m_sceneManager->SetActiveScene("MainScene");
+		Log::Info("Scene Graph:\n{}", m_sceneGraph.GetRoot().GetDebugInfo());
 	}
+
 }
