@@ -147,9 +147,11 @@ rule("CompileHLSL")
     	import("core.base.task")
         import("core.project.depend")
 
-        depend.on_changed(function ()
-        	task.run("CompileShaders", {file = sourcefile})
-        end, { files = sourcefile })
+        task.run("CompileShaders", {file = sourcefile})
+
+        -- Remove the dependency on the source file
+        --depend.on_changed(function ()
+        --end, { files = sourcefile })
 
     end)
 rule_end()
