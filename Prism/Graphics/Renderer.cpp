@@ -22,7 +22,7 @@ namespace Prism::Gfx
 		}
 	}
 
-	Renderer::Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc, 
+	Renderer::Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc,
 		const Core::SwapChain::SwapChainDesc& swapChainDesc, const DXGI_FORMAT depthFormat)
 		: m_depthStencilFormat(depthFormat)
 		, m_window(window)
@@ -54,6 +54,40 @@ namespace Prism::Gfx
 		m_device.reset();
 	}
 
+	bool Renderer::IsGraphicsDebuggerAttached() const
+	{
+		if (auto perf = m_device->GetAnnotation())
+		{
+			return perf->GetStatus();
+		}
+
+		return false;
+	}
+
+	void Renderer::BeginEvent(const Elos::WString& eventName) const
+	{
+		if (auto perf = m_device->GetAnnotation())
+		{
+			perf->BeginEvent(eventName.c_str());
+		}
+	}
+
+	void Renderer::EndEvent() const
+	{
+		if (auto perf = m_device->GetAnnotation())
+		{
+			perf->EndEvent();
+		}
+	}
+
+	void Renderer::SetMarker(const Elos::WString& markerName) const
+	{
+		if (auto perf = m_device->GetAnnotation())
+		{
+			perf->SetMarker(markerName.c_str());
+		}
+	}
+
 	void Renderer::ClearState() const
 	{
 		m_device->GetContext()->ClearState();
@@ -63,7 +97,7 @@ namespace Prism::Gfx
 	{
 		DX11::IDeviceContext* const context = m_device->GetContext();
 		DX11::IRenderTarget* const backBufferRTV = m_swapChain->GetBackBufferRTV();
-		
+
 		context->ClearRenderTargetView(backBufferRTV, clearColor);
 	}
 
@@ -80,17 +114,17 @@ namespace Prism::Gfx
 	void Renderer::SetWindowAsViewport() const
 	{
 		const Elos::WindowSize size = m_window.GetSize();
-		
+
 		D3D11_VIEWPORT vp
-		{ 
-			.TopLeftX = 0.0f, 
-			.TopLeftY = 0.0f, 
+		{
+			.TopLeftX = 0.0f,
+			.TopLeftY = 0.0f,
 			.Width    = static_cast<f32>(size.Width),
-			.Height   = static_cast<f32>(size.Height), 
-			.MinDepth = 0.0f, 
-			.MaxDepth = 1.0f 
+			.Height   = static_cast<f32>(size.Height),
+			.MinDepth = 0.0f,
+			.MaxDepth = 1.0f
 		};
-		
+
 		SetViewports(std::span<D3D11_VIEWPORT>(&vp, 1));
 	}
 
@@ -112,7 +146,7 @@ namespace Prism::Gfx
 			{
 				Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("Failed to resize DXGI Swap Chain! (Error Code: {:#x})", result.error().ErrorCode).Throw();
 			}
-			
+
 			if (auto result = CreateDepthStencilBuffer(); !result)
 			{
 				Elos::ASSERT(SUCCEEDED(result.error().ErrorCode)).Msg("Failed to resize Depth Stencil Buffer! {} (Error Code: {:#x})", result.error().Message, result.error().ErrorCode).Throw();
@@ -204,35 +238,35 @@ namespace Prism::Gfx
 			context->IASetInputLayout(vsData.Layout.Get());
 			break;
 		}
-		
+
 		case Pixel:
 		{
 			const Shader::PixelShaderData& psData = shader.As<Shader::Type::Pixel>();
 			context->PSSetShader(psData.Shader.Get(), nullptr, 0);
 			break;
 		}
-		
+
 		case Compute:
 		{
 			const Shader::ComputeShaderData& csData = shader.As<Shader::Type::Compute>();
 			context->CSSetShader(csData.Shader.Get(), nullptr, 0);
 			break;
 		}
-		
+
 		case Geometry:
 		{
 			const Shader::GeometryShaderData& gsData = shader.As<Shader::Type::Geometry>();
 			context->GSSetShader(gsData.Shader.Get(), nullptr, 0);
 			break;
 		}
-		
+
 		case Domain:
 		{
 			const Shader::DomainShaderData& dsData = shader.As<Shader::Type::Domain>();
 			context->DSSetShader(dsData.Shader.Get(), nullptr, 0);
 			break;
 		}
-		
+
 		case Hull:
 		{
 			const Shader::HullShaderData& hsData = shader.As<Shader::Type::Hull>();
@@ -339,7 +373,7 @@ namespace Prism::Gfx
 			Log::Info("Created DX11 Swap Chain");
 		}
 	}
-	
+
 	void Renderer::CreateDefaultStates()
 	{
 		// Create default depth stencil state
@@ -385,7 +419,7 @@ namespace Prism::Gfx
 			Log::Error("Failed to create wireframe rasterizer state. Error code: {:#x}", hr);
 		}
 	}
-	
+
 	std::expected<void, Core::SwapChain::SwapChainError> Renderer::CreateDepthStencilBuffer()
 	{
 		const auto& swapChainDesc = m_swapChain->GetDesc();

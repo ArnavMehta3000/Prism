@@ -31,6 +31,8 @@ namespace Prism::Gfx::Core
 
 	Device::~Device() noexcept
 	{
+		m_perf.Reset();
+
 		m_d3dContext->ClearState();  // Flush any pending states
 		m_d3dContext->Flush();
 
@@ -231,17 +233,24 @@ namespace Prism::Gfx::Core
 		if (FAILED(hr))
 		{
 			return std::unexpected(DeviceError
-				{
-					.Type      = DeviceError::Type::CreateContextFailed,
-					.ErrorCode = hr,
-					.Message   = "Failed to get ID3D11DeviceContext4  interface"
-				});
+			{
+				.Type      = DeviceError::Type::CreateContextFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to get ID3D11DeviceContext4  interface"
+			});
 		}
 
 		SetDebugObjectName(m_d3dDevice, "DX11Device");
 		SetDebugObjectName(m_d3dContext, "DX11ImmediateContext");
 
 		SetupDebugLayer();
+
+		// Create annotation
+		if (FAILED(m_d3dContext.As(&m_perf)))
+		{
+			Log::Error("Failed to create ID3DUserDefinedAnnotion. Custom markers will not be valid");
+		}
+
 
 		return {};
 	}

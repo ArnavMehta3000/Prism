@@ -22,7 +22,7 @@ namespace Prism
 			const auto currentTime = std::chrono::high_resolution_clock::now();
 			const f32 deltaTime    = std::chrono::duration<f32>(currentTime - lastTime).count();
 			lastTime               = currentTime;
-			
+
 			ProcessWindowEvents();
 			Tick(deltaTime);
 		}
@@ -39,7 +39,7 @@ namespace Prism
 
 		Log::Info("Initializing renderer");
 		CreateRenderer();
-		
+
 		Log::Info("Creating resources");
 		CreateResources();
 
@@ -64,18 +64,22 @@ namespace Prism
 	{
 		m_camera->SetLookAt(Vector3::Zero);
 		m_camera->Update();
-		
+
+		m_renderer->BeginEvent(L"Clear");
 		m_renderer->ClearState();
 		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
 		m_renderer->ClearDepthStencilBuffer(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
+		m_renderer->EndEvent();
 
+		m_renderer->BeginEvent(L"Set Resource");
 		m_renderer->SetBackBufferRenderTarget();
 		m_renderer->SetWindowAsViewport();
 		m_renderer->SetSolidRenderState();
 
-
 		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
 		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
+
+		m_renderer->EndEvent();
 
 		// Update CB
 		WVP wvp
@@ -84,18 +88,19 @@ namespace Prism
 			.View       = m_camera->GetViewMatrix().Transpose(),
 			.Projection = m_camera->GetProjectionMatrix().Transpose()
 		};
-		
+
 		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
 		{
 #ifdef PRISM_BUILD_DEBUG
 			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
 #endif
 		}
-		
-		//// Draw the mesh
+
+		// Draw the mesh
 		m_renderer->SetShader(*m_shaderVS);
 		m_renderer->SetShader(*m_shaderPS);
 
+		m_renderer->BeginEvent(L"Draw Cube");
 		m_sceneGraph.GetRoot().ForEach([&](Node& node)
 		{
 			if (auto result = node.GetProperty<Vector3>(); result)
@@ -109,6 +114,7 @@ namespace Prism
 				m_renderer->DrawMesh(*result);
 			}
 		});
+		m_renderer->EndEvent();
 
 		m_renderer->Present();
 	}
@@ -151,9 +157,9 @@ namespace Prism
 			if (e.Key == Elos::KeyCode::C)
 			{
 				const auto currentProjType = m_camera->GetProjectionType();
-				const auto nextProjType = currentProjType == Gfx::Camera::ProjectionType::Perspective ? 
+				const auto nextProjType = currentProjType == Gfx::Camera::ProjectionType::Perspective ?
 					Gfx::Camera::ProjectionType::Orthographic : Gfx::Camera::ProjectionType::Perspective;
-				
+
 				m_camera->SetProjectionType(nextProjType);
 			}
 		};
@@ -251,7 +257,7 @@ namespace Prism
 		cameraDesc.AspectRatio = static_cast<f32>(windowSize.Width) / static_cast<f32>(windowSize.Height);
 		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
 	}
-	
+
 	void App::CreateResources()
 	{
 		using namespace DirectX;
@@ -304,11 +310,11 @@ namespace Prism
 		Elos::ASSERT(Gfx::Shader::IsValid(*m_shaderPS)).Msg("Pixel shader not valid!").Throw();
 #endif
 	}
-	
+
 	void App::CreateConstantBuffer()
 	{
 		const auto& resourceFactory = m_renderer->GetResourceFactory();
-		
+
 		if (auto cbResult = resourceFactory.CreateConstantBuffer<WVP>(); !cbResult)
 		{
 			Elos::ASSERT(SUCCEEDED(cbResult.error().ErrorCode)).Msg("Failed to create constant buffer! (Error Code: {:#x})", cbResult.error().ErrorCode).Throw();
@@ -318,7 +324,7 @@ namespace Prism
 			m_wvpCBuffer = std::move(cbResult.value());
 		}
 	}
-	
+
 	void App::CreateScene()
 	{
 		Node& cube1 = m_sceneGraph.GetRoot().CreateChild("Main Cube");

@@ -21,11 +21,15 @@ namespace Prism::Gfx
 	class Renderer
 	{
 	public:
-		Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc, 
+		Renderer(Elos::Window& window, const Core::Device::DeviceDesc& deviceDesc,
 			const Core::SwapChain::SwapChainDesc& swapChainDesc, const DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 		~Renderer();
 
 		NODISCARD const ResourceFactory& GetResourceFactory() const { return *m_resourceFactory; }
+		NODISCARD bool IsGraphicsDebuggerAttached() const;
+		void BeginEvent(const Elos::WString& eventName) const;
+		void EndEvent() const;
+		void SetMarker(const Elos::WString& markerName) const;
 
 		void ClearState() const;
 		void ClearBackBuffer(const f32* clearColor) const;
@@ -57,7 +61,7 @@ namespace Prism::Gfx
 		void CreateSwapChain(const Core::SwapChain::SwapChainDesc& swapChainDesc);
 		void CreateDefaultStates();
 		std::expected<void, Core::SwapChain::SwapChainError> CreateDepthStencilBuffer();
-		
+
 		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
 		NODISCARD inline Core::SwapChain* GetSwapChain() const noexcept { return m_swapChain.get(); }
 

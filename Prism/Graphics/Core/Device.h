@@ -56,6 +56,7 @@ namespace Prism::Gfx::Core
 		NODISCARD inline DX11::IDevice*                     GetDevice() const noexcept                 { return m_d3dDevice.Get();        }
 		NODISCARD inline DX11::IDeviceContext*              GetContext() const noexcept                { return m_d3dContext.Get();       }
 		NODISCARD inline DX11::IFactory*                    GetFactory() const noexcept                { return m_dxgiFactory.Get();      }
+		NODISCARD inline ID3DUserDefinedAnnotation*         GetAnnotation() const noexcept             { return m_perf.Get();              }
 
 		// Passing true here means this function will reset the device and factory
 		void ReportLiveObjects(bool resetObjs = false) noexcept;
@@ -69,12 +70,13 @@ namespace Prism::Gfx::Core
 		void SetupDebugLayer();
 
 	private:
-		ComPtr<DX11::IFactory>         m_dxgiFactory;
-		ComPtr<DX11::IAdapter>         m_dxgiAdapter;
-		ComPtr<DX11::IDevice>          m_d3dDevice;
-		ComPtr<DX11::IDeviceContext>   m_d3dContext;
-		std::vector<D3D_FEATURE_LEVEL> m_supportedFeatureLevels;
-		D3D_FEATURE_LEVEL              m_featureLevel{ D3D_FEATURE_LEVEL_11_0 };
-		AdapterInfo                    m_adapterInfo;
+		ComPtr<DX11::IFactory>            m_dxgiFactory;
+		ComPtr<DX11::IAdapter>            m_dxgiAdapter;
+		ComPtr<DX11::IDevice>             m_d3dDevice;
+		ComPtr<DX11::IDeviceContext>      m_d3dContext;
+		ComPtr<ID3DUserDefinedAnnotation> m_perf;
+		std::vector<D3D_FEATURE_LEVEL>    m_supportedFeatureLevels;
+		D3D_FEATURE_LEVEL                 m_featureLevel{ D3D_FEATURE_LEVEL_11_0 };
+		AdapterInfo                       m_adapterInfo;
 	};
 }
