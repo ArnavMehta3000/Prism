@@ -4,7 +4,7 @@
 #include "Graphics/Utils/DebugName.h"
 #include <Elos/Common/Assert.h>
 #include <Elos/Window/Window.h>
-#include <ranges>
+#include <imgui_impl_dx11.h>
 
 namespace Prism::Gfx
 {
@@ -53,6 +53,11 @@ namespace Prism::Gfx
 		m_resourceFactory.reset();
 		m_swapChain.reset();
 		m_device.reset();
+	}
+
+	bool Renderer::InitImGui()
+	{
+		return ImGui_ImplDX11_Init(m_device->GetDevice(), m_device->GetContext());
 	}
 
 	bool Renderer::IsGraphicsDebuggerAttached() const

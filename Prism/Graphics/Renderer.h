@@ -27,6 +27,8 @@ namespace Prism::Gfx
 			const Core::SwapChain::SwapChainDesc& swapChainDesc, const DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 		~Renderer();
 
+		bool InitImGui();
+
 		NODISCARD const ResourceFactory& GetResourceFactory() const { return *m_resourceFactory; }
 		NODISCARD bool IsGraphicsDebuggerAttached() const;
 		void BeginEvent(const Elos::WString& eventName) const;

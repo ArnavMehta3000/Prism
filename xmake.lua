@@ -27,8 +27,9 @@ add_defines("UNICODE", "_UNICODE", "NOMINMAX", "NOMCX", "NOSERVICE", "NOHELP", "
 add_tests("CompileSuccess", { build_should_pass = true, group = "Compilation" })
 
 set_runtimes(is_mode("debug") and "MTd" or "MT")
-add_requires("Elos 57332c984b0a02c4dc6921583057161f14ae66d5")
 
+add_requires("Elos 57332c984b0a02c4dc6921583057161f14ae66d5")
+add_requires("imgui 2d403a16144070a4cb46bb124318b20141e83cb4", { configs = { dx11 = true, win32 = true } })
 add_requires("cxxopts", "directxtk", "assimp")
 
 target("ShaderCompiler")
@@ -53,7 +54,7 @@ target("Prism")
 	add_files("Shaders/**.hlsl", {install = true })
 	add_headerfiles("(Prism/**.h)", { install = true })
 
-	add_packages("Elos", "directxtk", "assimp")
+	add_packages("Elos", "directxtk", "assimp", "imgui")
 	add_deps("ShaderCompiler")
 
 	add_rules("CompileHLSL")

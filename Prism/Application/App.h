@@ -27,8 +27,12 @@ namespace Prism
 		void CreateShaders();
 		void LoadGLTF();
 		void CreateConstantBuffer();
+		void InitImGui();
+		void ShutdownImGui();
 
 	private:
+		bool                                      m_isMouseDown = false;
+		bool                                      m_isSolidRenderState = true;
 		std::shared_ptr<class Elos::Window>       m_window;
 		std::shared_ptr<Gfx::Renderer>            m_renderer;
 		std::shared_ptr<Gfx::Camera>              m_camera;
@@ -37,8 +41,5 @@ namespace Prism
 		std::shared_ptr<Gfx::Shader>              m_shaderVS;
 		std::shared_ptr<Gfx::Shader>              m_shaderPS;
 		Elos::Timer                               m_timer;
-
-		bool m_isMouseDown = false;
-		bool m_isSolidRenderState = true;
 	};
 }

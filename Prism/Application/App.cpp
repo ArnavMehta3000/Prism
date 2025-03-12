@@ -1,17 +1,28 @@
 #include "App.h"
 #include "Utils/Log.h"
 #include "Graphics/Utils/ResourceFactory.h"
-#include "Graphics/Primitives.h"
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <Elos/Event/Signal.h>
 #include <DirectXColors.h>
+#include <imgui.h>
+#include <imgui_impl_win32.h>
+#include <imgui_impl_dx11.h>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Prism
 {
-	Elos::Signal<const Elos::Timer::TimeInfo&> g_perSecondEvent;	
+	Elos::Signal<const Elos::Timer::TimeInfo&>     g_perSecondEvent;	
 	Elos::Connection<const Elos::Timer::TimeInfo&> g_updateWindowTitleConnection;
+	WNDPROC                                        g_originalWndProc = nullptr;
 
+
+	static LRESULT ImGuiWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+		return ::CallWindowProc(g_originalWndProc, hWnd, msg, wParam, lParam);
+	}
 
 	void App::Run()
 	{
@@ -67,6 +78,7 @@ namespace Prism
 
 		CreateMainWindow();
 		CreateRenderer();
+		InitImGui();
 		CreateShaders();
 		LoadGLTF();
 		CreateConstantBuffer();
@@ -75,6 +87,8 @@ namespace Prism
 	void App::Shutdown()
 	{
 		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Shutdown app in {}s", timeInfo.TotalTime); });
+		
+		ShutdownImGui();
 
 		m_wvpCBuffer.reset();
 		m_shaderVS.reset();
@@ -85,14 +99,18 @@ namespace Prism
 		m_window.reset();
 	}
 
-	void App::Tick(MAYBE_UNUSED const Elos::Timer::TimeInfo& timeInfo)
+	void App::Tick(const Elos::Timer::TimeInfo& timeInfo)
 	{
 		m_camera->SetLookAt(Vector3::Zero);
 		m_camera->Update();
 
+		const f32 radians = DirectX::XMConvertToRadians(static_cast<f32>(timeInfo.TotalTime) * 50.0f);
+		const f32 angle = DirectX::XMConvertToRadians(90.0f);
+		const Matrix world = Matrix::CreateRotationZ(angle) * Matrix::CreateRotationY(angle) * Matrix::CreateRotationX(angle);
+
 		WVP wvp
 		{
-			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Model location
+			.World      = world.Transpose(),
 			.View       = m_camera->GetViewMatrix().Transpose(),
 			.Projection = m_camera->GetProjectionMatrix().Transpose()
 		};
@@ -138,6 +156,17 @@ namespace Prism
 		m_model->Render(*m_renderer);
 		m_renderer->EndEvent();
 
+		m_renderer->BeginEvent(L"ImGui");
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::ShowDemoWindow();
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		m_renderer->EndEvent();
+
 		m_renderer->Present();
 	}
 
@@ -154,6 +183,33 @@ namespace Prism
 
 		Elos::WindowExtensions::EnableDarkMode(m_window->GetHandle(), true);
 		m_window->SetMinimumSize({ 600, 400 });
+	}
+
+	void App::InitImGui()
+	{
+		// Route window procedure
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Initialized ImGui in {}s", timeInfo.TotalTime); });
+		g_originalWndProc = (WNDPROC)::SetWindowLongPtr(m_window->GetHandle(), GWLP_WNDPROC, (LONG_PTR)&ImGuiWndProc);
+
+		IMGUI_CHECKVERSION();
+		MAYBE_UNUSED ImGuiContext* context = ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+#ifdef PRISM_BUILD_DEBUG
+		Elos::ASSERT_NOT_NULL(m_renderer.get()).Throw();
+#endif
+		Elos::ASSERT(ImGui_ImplWin32_Init(m_window->GetHandle())).Msg("Failed to initialize ImGui - Win32").Throw();
+		Elos::ASSERT(m_renderer->InitImGui()).Msg("Failed to initialize ImGui - DX11").Throw();
+	}
+
+	void App::ShutdownImGui()
+	{
+		ImGui_ImplDX11_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
 	}
 
 	void App::ProcessWindowEvents()
@@ -220,7 +276,7 @@ namespace Prism
 
 		const auto OnWindowMousePressed = [this](const Elos::Event::MouseButtonPressed& e)
 		{
-			if (e.Button == Elos::KeyCode::MouseButton::Left)
+			if (e.Button == Elos::KeyCode::MouseButton::Right)
 			{
 				m_isMouseDown = true;
 			}
@@ -228,7 +284,7 @@ namespace Prism
 
 		const auto OnWindowMouseReleased = [this](const Elos::Event::MouseButtonReleased& e)
 		{
-			if (e.Button == Elos::KeyCode::MouseButton::Left)
+			if (e.Button == Elos::KeyCode::MouseButton::Right)
 			{
 				m_isMouseDown = false;
 			}
