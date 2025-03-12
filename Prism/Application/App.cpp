@@ -302,7 +302,7 @@ namespace Prism
 		else
 		{
 			m_shaderVS = std::move(shaderResult.value());
-			m_shaderVS->SetShaderDebugName("Test_VS");
+			m_shaderVS->SetShaderDebugName("SimpleModel_VS");
 		}
 
 		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Pixel>("Shaders/SimpleModel_PS.cso"); !shaderResult)
@@ -312,7 +312,7 @@ namespace Prism
 		else
 		{
 			m_shaderPS = std::move(shaderResult.value());
-			m_shaderPS->SetShaderDebugName("Test_PS");
+			m_shaderPS->SetShaderDebugName("SimpleModel_PS");
 		}
 
 #if PRISM_BUILD_DEBUG  // Shader pointers will be valid here. The above asserts should catch them
