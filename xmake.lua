@@ -27,7 +27,7 @@ add_defines("UNICODE", "_UNICODE", "NOMINMAX", "NOMCX", "NOSERVICE", "NOHELP", "
 add_tests("CompileSuccess", { build_should_pass = true, group = "Compilation" })
 
 set_runtimes(is_mode("debug") and "MTd" or "MT")
-add_requires("Elos")
+add_requires("Elos 57332c984b0a02c4dc6921583057161f14ae66d5")
 
 add_requires("cxxopts", "directxtk", "assimp")
 
