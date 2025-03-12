@@ -8,6 +8,7 @@
 #include "Graphics/Resources/Buffers/ConstantBuffer.h"
 #include "Graphics/Resources/Shaders/Shader.h"
 #include <Elos/Window/Window.h>
+#include <Elos/Utils/Timer.h>
 
 namespace Prism
 {
@@ -19,7 +20,8 @@ namespace Prism
 	private:
 		void Init();
 		void Shutdown();
-		void Tick(const f32 deltaTime);
+		void Tick(const Elos::Timer::TimeInfo& timeInfo);
+		void Render();
 
 		void CreateMainWindow();
 		void ProcessWindowEvents();
@@ -38,6 +40,7 @@ namespace Prism
 		std::shared_ptr<Gfx::Shader>              m_shaderVS;
 		std::shared_ptr<Gfx::Shader>              m_shaderPS;
 		SceneGraph                                m_sceneGraph;
+		Elos::Timer                               m_timer;
 
 		bool m_isMouseDown = false;
 	};

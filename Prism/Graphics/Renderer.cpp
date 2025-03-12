@@ -4,6 +4,7 @@
 #include "Graphics/Utils/DebugName.h"
 #include <Elos/Common/Assert.h>
 #include <Elos/Window/Window.h>
+#include <ranges>
 
 namespace Prism::Gfx
 {
@@ -211,17 +212,6 @@ namespace Prism::Gfx
 		m_device->GetContext()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 	}
 
-	void Renderer::DrawMesh(const Mesh& mesh, bool bindMesh) const
-	{
-		DX11::IDeviceContext* const context = m_device->GetContext();
-		if (bindMesh)
-		{
-			mesh.Bind(context);
-		}
-
-		context->DrawIndexed(mesh.GetIndexBuffer()->IndexCount, 0, 0);
-	}
-
 	void Renderer::SetShader(const Shader& shader) const
 	{
 		DX11::IDeviceContext* const context = m_device->GetContext();
@@ -276,9 +266,16 @@ namespace Prism::Gfx
 		}
 	}
 
-	void Renderer::SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, std::span<DX11::IBuffer* const> buffers) const
+	void Renderer::SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, const std::span<const Buffer* const> buffers) const
 	{
 		DX11::IDeviceContext* const context = m_device->GetContext();
+		
+		std::vector<DX11::IBuffer*> d3dBuffers;
+		d3dBuffers.reserve(buffers.size());
+		std::ranges::transform(buffers, std::back_inserter(d3dBuffers), [](const Buffer* buffer) { return buffer->GetBuffer(); });
+
+		const u32 size = static_cast<u32>(buffers.size());
+		const auto buffersData = d3dBuffers.data();
 
 		switch (shaderType)
 		{
@@ -286,37 +283,37 @@ namespace Prism::Gfx
 
 		case Vertex:
 		{
-			context->VSSetConstantBuffers(startSlot, static_cast<u32>(buffers.size()), buffers.data());
+			context->VSSetConstantBuffers(startSlot, size, buffersData);
 			break;
 		}
 
 		case Pixel:
 		{
-			context->PSSetConstantBuffers(startSlot, static_cast<u32>(buffers.size()), buffers.data());
+			context->PSSetConstantBuffers(startSlot, size, buffersData);
 			break;
 		}
 
 		case Compute:
 		{
-			context->CSSetConstantBuffers(startSlot, static_cast<u32>(buffers.size()), buffers.data());
+			context->CSSetConstantBuffers(startSlot, size, buffersData);
 			break;
 		}
 
 		case Geometry:
 		{
-			context->GSSetConstantBuffers(startSlot, static_cast<u32>(buffers.size()), buffers.data());
+			context->GSSetConstantBuffers(startSlot, size, buffersData);
 			break;
 		}
 
 		case Domain:
 		{
-			context->DSSetConstantBuffers(startSlot, static_cast<u32>(buffers.size()), buffers.data());
+			context->DSSetConstantBuffers(startSlot, size, buffersData);
 			break;
 		}
 
 		case Hull:
 		{
-			context->HSSetConstantBuffers(startSlot, static_cast<u32>(buffers.size()), buffers.data());
+			context->HSSetConstantBuffers(startSlot, size, buffersData);
 			break;
 		}
 		}
@@ -342,6 +339,46 @@ namespace Prism::Gfx
 	{
 		SetRasterizerState(m_wireframeRasterizerState.Get());
 		SetDepthStencilState(m_defaultDepthStencilState.Get(), 0);
+	}
+
+	void Renderer::SetIndexBuffer(const IndexBuffer& buffer, const DXGI_FORMAT format, const u32 offset) const noexcept
+	{
+		m_device->GetContext()->IASetIndexBuffer(buffer.GetBuffer(), format, offset);
+	}
+
+	void Renderer::SetVertexBuffers(const u32 startSlot, const std::span<const VertexBuffer* const>& buffers, std::span<const u32> offsets) const noexcept
+	{
+		std::vector<u32> defaultOffsets;
+		if (offsets.empty()) 
+		{
+			defaultOffsets.resize(buffers.size(), 0);
+			offsets = defaultOffsets;
+		}
+		else if (offsets.size() != buffers.size()) 
+		{
+			Log::Error("Failed to set vertex buffers, offsets size must match buffers size");
+			return;
+		}
+
+		std::vector<DX11::IBuffer*> d3dBuffers;
+		std::ranges::transform(buffers, std::back_inserter(d3dBuffers), [](const VertexBuffer* vb) { return vb->GetBuffer(); });
+
+
+		std::vector<u32> strides;
+		strides.reserve(buffers.size());
+		std::ranges::transform(buffers, std::back_inserter(strides), [](const VertexBuffer* vb) { return vb->Stride; });
+		
+		m_device->GetContext()->IASetVertexBuffers(
+			startSlot,
+			static_cast<u32>(buffers.size()),
+			d3dBuffers.data(),
+			strides.data(),
+			offsets.data());
+	}
+
+	void Renderer::SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology) const noexcept
+	{
+		m_device->GetContext()->IASetPrimitiveTopology(topology);
 	}
 
 	void Renderer::CreateDevice(const Core::Device::DeviceDesc& deviceDesc)

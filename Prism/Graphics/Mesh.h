@@ -38,7 +38,8 @@ namespace Prism::Gfx
 
 	public:
 		~Mesh() noexcept;
-		void Bind(DX11::IDeviceContext* context) const noexcept;
+
+		void Render(const Renderer& renderer) const noexcept;
 
 		NODISCARD inline D3D11_PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
 		NODISCARD inline VertexBuffer* GetVertexBuffer() const noexcept { return m_vertexBuffer.get(); }

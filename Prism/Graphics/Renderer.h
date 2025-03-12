@@ -17,6 +17,8 @@ namespace Prism::Gfx
 	class Shader;
 	class Camera;
 	class ResourceFactory;
+	class IndexBuffer;
+	class VertexBuffer;
 
 	class Renderer
 	{
@@ -45,13 +47,15 @@ namespace Prism::Gfx
 		void DrawIndexed(const u32 indexCount, const u32 startIndexLocation, const i32 baseVertexLocation) const;
 		void DrawIndexedInstanced(const u32 indexCountPerInstance, const u32 instanceCount, const u32 startIndexLocation, const i32 baseVertexLocation, const u32 startInstanceLocation) const;
 		void DrawInstanced(const u32 vertexCountPerInstance, const u32 instanceCount, const u32 startVertexLocation, const u32 startInstanceLocation) const;
-		void DrawMesh(const Mesh& mesh, bool bindMesh = true) const;
 		void SetShader(const Shader& shader) const;
-		void SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, std::span<DX11::IBuffer* const> buffers) const;
+		void SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, const std::span<const Buffer* const> buffers) const;
 		void SetDepthStencilState(DX11::IDepthStencilState* state, u32 stencilRef = 0) const;
 		void SetRasterizerState(DX11::IRasterizerState* state) const;
 		void SetSolidRenderState() const;
 		void SetWireframeRenderState() const;
+		void SetIndexBuffer(const IndexBuffer& buffer, const DXGI_FORMAT format = DXGI_FORMAT_R32_UINT, const u32 offset = 0) const noexcept;
+		void SetVertexBuffers(const u32 startSlot, const std::span<const VertexBuffer* const>& buffers, std::span<const u32> offsets) const noexcept;
+		void SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology) const noexcept;
 
 		template<typename T>
 		std::expected<void, Buffer::BufferError> UpdateConstantBuffer(ConstantBuffer<T>& constantBuffer, const T& data) const { return constantBuffer.Update(m_device->GetContext(), data); }

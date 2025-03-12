@@ -4,53 +4,77 @@
 #include "Graphics/Primitives.h"
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
+#include <Elos/Event/Signal.h>
 #include <DirectXColors.h>
-#include <chrono>
 
 namespace Prism
 {
+	Elos::Signal<const Elos::Timer::TimeInfo&> g_perSecondEvent;	
+	Elos::Connection<const Elos::Timer::TimeInfo&> g_updateWindowTitleConnection;
+
 	void App::Run()
 	{
 		Init();
-
 		Log::Info("Starting App");
+		
+		f64 prevTime = 0.0f;
+		constexpr f64 updateInterval = 1.0f;
+		
+		// Using a signal to update the window title every second just for fun :)
+		g_updateWindowTitleConnection = g_perSecondEvent.Connect([this](const Elos::Timer::TimeInfo& timeInfo)
+		{
+			m_window->SetTitle(
+				std::format("Prism | FPS: {} | Frame Count: {} | Delta Time: {:.7f}",
+					timeInfo.FrameCount,
+					timeInfo.FPS,
+					timeInfo.DeltaTime));
+			
+		});
 
-		auto lastTime = std::chrono::high_resolution_clock::now();
+		// Emit signal before starting
+		g_perSecondEvent.Emit(Elos::Timer::TimeInfo{});
 
 		while (m_window->IsOpen())
 		{
-			const auto currentTime = std::chrono::high_resolution_clock::now();
-			const f32 deltaTime    = std::chrono::duration<f32>(currentTime - lastTime).count();
-			lastTime               = currentTime;
-
 			ProcessWindowEvents();
-			Tick(deltaTime);
-		}
-		Log::Info("Stopping App");
+			
+			m_timer.Tick([this, &prevTime](const Elos::Timer::TimeInfo& timeInfo)
+			{
+				// Update window title with FPS info every second
+				prevTime += timeInfo.DeltaTime;
+				if (prevTime >= updateInterval)
+				{
+					prevTime = 0.0f;
+					g_perSecondEvent.Emit(timeInfo);
+				}
 
+				this->Tick(timeInfo);
+			});
+
+			Render();
+		}
+
+		g_updateWindowTitleConnection.Disconnect();
+
+		Log::Info("Stopping App");
 		Shutdown();
 	}
 
 	void App::Init()
 	{
-		Log::Info("Initializing application");
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Initialized app in {}s", timeInfo.TotalTime); });
+
 		CreateMainWindow();
-
-
-		Log::Info("Initializing renderer");
 		CreateRenderer();
-
-		Log::Info("Creating resources");
 		CreateResources();
-
-		Log::Info("Creating constant buffer");
 		CreateConstantBuffer();
-
 		CreateScene();
 	}
 
 	void App::Shutdown()
 	{
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Shutdown app in {}s", timeInfo.TotalTime); });
+
 		m_wvpCBuffer.reset();
 		m_shaderVS.reset();
 		m_shaderPS.reset();
@@ -60,11 +84,15 @@ namespace Prism
 		m_window.reset();
 	}
 
-	void App::Tick(MAYBE_UNUSED const f32 deltaTime)
+
+	void App::Tick(MAYBE_UNUSED const Elos::Timer::TimeInfo& timeInfo)
 	{
 		m_camera->SetLookAt(Vector3::Zero);
 		m_camera->Update();
+	}
 
+	void App::Render()
+	{
 		m_renderer->BeginEvent(L"Clear");
 		m_renderer->ClearState();
 		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
@@ -76,12 +104,12 @@ namespace Prism
 		m_renderer->SetWindowAsViewport();
 		m_renderer->SetSolidRenderState();
 
-		DX11::IBuffer* const d3dCBuffer = m_wvpCBuffer->GetBuffer();
-		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span(&d3dCBuffer, 1));
+		Gfx::Buffer* wvpBuffers[] = { m_wvpCBuffer.get() };
+		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span{ wvpBuffers });
 
 		m_renderer->EndEvent();
 
-		// Update CB
+		// TODO: move to Tick (currently here to draw 2 cubes)
 		WVP wvp
 		{
 			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
@@ -102,18 +130,18 @@ namespace Prism
 
 		m_renderer->BeginEvent(L"Draw Cube");
 		m_sceneGraph.GetRoot().ForEach([&](Node& node)
-		{
-			if (auto result = node.GetProperty<Vector3>(); result)
 			{
-				wvp.World = Matrix::CreateTranslation(*result).Transpose();
-				std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
-			}
+				if (auto result = node.GetProperty<Vector3>(); result)
+				{
+					wvp.World = Matrix::CreateTranslation(*result).Transpose();
+					std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
+				}
 
-			if (auto result = node.GetProperty<Gfx::Mesh>(); result)
-			{
-				m_renderer->DrawMesh(*result);
-			}
-		});
+				if (auto result = node.GetProperty<Gfx::Mesh>(); result)
+				{
+					result.value().get().Render(*m_renderer);
+				}
+			});
 		m_renderer->EndEvent();
 
 		m_renderer->Present();
@@ -121,6 +149,8 @@ namespace Prism
 
 	void App::CreateMainWindow()
 	{
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created main window in {}s", timeInfo.TotalTime); });
+
 		m_window = std::make_unique<Elos::Window>(
 			Elos::WindowCreateInfo::Default("Prism", { 1280, 720 }));
 
@@ -232,6 +262,8 @@ namespace Prism
 
 	void App::CreateRenderer()
 	{
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Initialized renderer in {}s", timeInfo.TotalTime); });
+
 		const Gfx::Core::Device::DeviceDesc deviceDesc
 		{
 			.EnableDebugLayer = true,
@@ -245,6 +277,7 @@ namespace Prism
 			.Width        = windowSize.Width,
 			.Height       = windowSize.Height,
 			.BufferCount  = 2,
+			.SyncInterval = 0,  // No vsync
 			.Format       = DXGI_FORMAT_R8G8B8A8_UNORM,
 			.AllowTearing = true,
 			.Fullscreen   = false
@@ -260,6 +293,7 @@ namespace Prism
 
 	void App::CreateResources()
 	{
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created resources in {}s", timeInfo.TotalTime); });
 		using namespace DirectX;
 
 #pragma region Create mesh
@@ -313,6 +347,7 @@ namespace Prism
 
 	void App::CreateConstantBuffer()
 	{
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created constant buffer in {}s", timeInfo.TotalTime); });
 		const auto& resourceFactory = m_renderer->GetResourceFactory();
 
 		if (auto cbResult = resourceFactory.CreateConstantBuffer<WVP>(); !cbResult)
@@ -327,6 +362,8 @@ namespace Prism
 
 	void App::CreateScene()
 	{
+		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created scene in {}s", timeInfo.TotalTime); });
+
 		Node& cube1 = m_sceneGraph.GetRoot().CreateChild("Main Cube");
 		cube1.SetProperty(*m_mesh);
 		cube1.SetProperty(Vector3::Zero);
