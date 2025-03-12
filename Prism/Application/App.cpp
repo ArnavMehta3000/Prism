@@ -67,10 +67,9 @@ namespace Prism
 
 		CreateMainWindow();
 		CreateRenderer();
-		CreateResources();
+		CreateShaders();
 		LoadGLTF();
 		CreateConstantBuffer();
-		CreateScene();
 	}
 
 	void App::Shutdown()
@@ -80,7 +79,7 @@ namespace Prism
 		m_wvpCBuffer.reset();
 		m_shaderVS.reset();
 		m_shaderPS.reset();
-		m_mesh.reset();
+		m_model.reset();
 		m_camera.reset();
 		m_renderer.reset();
 		m_window.reset();
@@ -117,6 +116,7 @@ namespace Prism
 		m_renderer->BeginEvent(L"Set Resources");
 		m_renderer->SetBackBufferRenderTarget();
 		m_renderer->SetWindowAsViewport();
+
 		if (m_isSolidRenderState)
 		{
 			m_renderer->SetSolidRenderState();
@@ -128,27 +128,13 @@ namespace Prism
 
 		Gfx::Buffer* wvpBuffers[] = { m_wvpCBuffer.get() };
 		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span{ wvpBuffers });
-
-		m_renderer->EndEvent();
-
-		// Draw the mesh
 		m_renderer->SetShader(*m_shaderVS);
 		m_renderer->SetShader(*m_shaderPS);
+		m_renderer->EndEvent();
 
-		m_renderer->BeginEvent(L"Draw Cube");
-		/*m_sceneGraph.GetRoot().ForEach([&](Node& node)
-			{
-				if (auto result = node.GetProperty<Vector3>(); result)
-				{
-					wvp.World = Matrix::CreateTranslation(*result).Transpose();
-					std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
-				}
+		// Draw the model
 
-				if (auto result = node.GetProperty<Gfx::Mesh>(); result)
-				{
-					result.value().get().Render(*m_renderer);
-				}
-			});*/
+		m_renderer->BeginEvent(L"Draw model");
 		m_model->Render(*m_renderer);
 		m_renderer->EndEvent();
 
@@ -302,34 +288,14 @@ namespace Prism
 		m_camera = std::make_unique<Gfx::Camera>(cameraDesc);
 	}
 
-	void App::CreateResources()
+	void App::CreateShaders()
 	{
 		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created resources in {}s", timeInfo.TotalTime); });
 		using namespace DirectX;
-
-#pragma region Create mesh
-		const auto& vertices = Gfx::Primitives::Cube::VertexPositionColor;
-		const auto& indices  = Gfx::Primitives::Cube::Indices;
-		using VertexType     = Gfx::Primitives::Cube::VertexTypes::PositionColor;
-
-		Gfx::Mesh::MeshDesc meshDesc{};
-		meshDesc.VertexStride = sizeof(VertexType);
-
+		
 		const auto& resourceFactory = m_renderer->GetResourceFactory();
 
-		if (auto meshResult = resourceFactory.CreateMesh<VertexType>(vertices, indices, meshDesc); !meshResult)
-		{
-			Elos::ASSERT(SUCCEEDED(meshResult.error().ErrorCode)).Msg("Failed to create mesh! (Error Code: {:#x})", meshResult.error().ErrorCode).Throw();
-		}
-		else
-		{
-			m_mesh = std::move(meshResult.value());
-		}
-#pragma endregion
-
-
-#pragma region Create shaders
-		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Vertex>("Shaders/DrawCube_VS.cso"); !shaderResult)
+		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Vertex>("Shaders/SimpleModel_VS.cso"); !shaderResult)
 		{
 			Elos::ASSERT(SUCCEEDED(shaderResult.error().ErrorCode)).Msg("Failed to create vertex shader! (Error Code: {:#x})", shaderResult.error().ErrorCode).Throw();
 		}
@@ -339,7 +305,7 @@ namespace Prism
 			m_shaderVS->SetShaderDebugName("Test_VS");
 		}
 
-		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Pixel>("Shaders/DrawCube_PS.cso"); !shaderResult)
+		if (auto shaderResult = resourceFactory.CreateShader<Gfx::Shader::Type::Pixel>("Shaders/SimpleModel_PS.cso"); !shaderResult)
 		{
 			Elos::ASSERT(SUCCEEDED(shaderResult.error().ErrorCode)).Msg("Failed to create pixel shader! (Error Code: {:#x})", shaderResult.error().ErrorCode).Throw();
 		}
@@ -348,7 +314,6 @@ namespace Prism
 			m_shaderPS = std::move(shaderResult.value());
 			m_shaderPS->SetShaderDebugName("Test_PS");
 		}
-#pragma endregion
 
 #if PRISM_BUILD_DEBUG  // Shader pointers will be valid here. The above asserts should catch them
 		Elos::ASSERT(Gfx::Shader::IsValid(*m_shaderVS)).Msg("Vertex shader not valid!").Throw();
@@ -396,20 +361,5 @@ namespace Prism
 		{
 			m_wvpCBuffer = std::move(cbResult.value());
 		}
-	}
-
-	void App::CreateScene()
-	{
-		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created scene in {}s", timeInfo.TotalTime); });
-
-		Node& cube1 = m_sceneGraph.GetRoot().CreateChild("Main Cube");
-		cube1.SetProperty(*m_mesh);
-		cube1.SetProperty(Vector3::Zero);
-
-		Node& cube2 = m_sceneGraph.GetRoot().CreateChild("Second Cube");
-		cube2.SetProperty(*m_mesh);
-		cube2.SetProperty(Vector3(2, 2, 2));
-
-		//Log::Info("Scene Graph:\n{}", m_sceneGraph.GetRoot().GetDebugInfo());
 	}
 }
