@@ -58,4 +58,11 @@ target("Prism")
 
 	add_rules("CompileHLSL")
 	add_links("d3d11", "dxgi", "dxguid", "uuid")
+
+	on_config(function(target)
+		local assetsPath = path.join(os.projectdir(), "Assets")
+		assetsPath = assetsPath:gsub("\\", "/")
+		local defineValue = "PRISM_ASSETS_PATH=\"" .. assetsPath .. "\""
+		target:add("defines", defineValue)
+	end)
 target_end()

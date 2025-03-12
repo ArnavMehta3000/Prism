@@ -5,6 +5,7 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/Camera.h"
 #include "Graphics/Mesh.h"
+#include "Graphics/Model.h"
 #include "Graphics/Resources/Buffers/ConstantBuffer.h"
 #include "Graphics/Resources/Shaders/Shader.h"
 #include <Elos/Window/Window.h>
@@ -27,6 +28,7 @@ namespace Prism
 		void ProcessWindowEvents();
 		void CreateRenderer();
 		void CreateResources();
+		void LoadGLTF();
 		void CreateConstantBuffer();
 		void CreateScene();
 
@@ -36,6 +38,7 @@ namespace Prism
 		std::shared_ptr<Gfx::Camera>              m_camera;
 
 		std::shared_ptr<Gfx::Mesh>                m_mesh;
+		std::shared_ptr<Prism::Gfx::Model>        m_model;
 		std::shared_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
 		std::shared_ptr<Gfx::Shader>              m_shaderVS;
 		std::shared_ptr<Gfx::Shader>              m_shaderPS;
@@ -43,5 +46,6 @@ namespace Prism
 		Elos::Timer                               m_timer;
 
 		bool m_isMouseDown = false;
+		bool m_isSolidRenderState = true;
 	};
 }

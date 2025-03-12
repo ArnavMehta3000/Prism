@@ -12,6 +12,7 @@ namespace Prism
 	Elos::Signal<const Elos::Timer::TimeInfo&> g_perSecondEvent;	
 	Elos::Connection<const Elos::Timer::TimeInfo&> g_updateWindowTitleConnection;
 
+
 	void App::Run()
 	{
 		Init();
@@ -67,6 +68,7 @@ namespace Prism
 		CreateMainWindow();
 		CreateRenderer();
 		CreateResources();
+		LoadGLTF();
 		CreateConstantBuffer();
 		CreateScene();
 	}
@@ -84,35 +86,14 @@ namespace Prism
 		m_window.reset();
 	}
 
-
 	void App::Tick(MAYBE_UNUSED const Elos::Timer::TimeInfo& timeInfo)
 	{
 		m_camera->SetLookAt(Vector3::Zero);
 		m_camera->Update();
-	}
 
-	void App::Render()
-	{
-		m_renderer->BeginEvent(L"Clear");
-		m_renderer->ClearState();
-		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
-		m_renderer->ClearDepthStencilBuffer(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
-		m_renderer->EndEvent();
-
-		m_renderer->BeginEvent(L"Set Resource");
-		m_renderer->SetBackBufferRenderTarget();
-		m_renderer->SetWindowAsViewport();
-		m_renderer->SetSolidRenderState();
-
-		Gfx::Buffer* wvpBuffers[] = { m_wvpCBuffer.get() };
-		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span{ wvpBuffers });
-
-		m_renderer->EndEvent();
-
-		// TODO: move to Tick (currently here to draw 2 cubes)
 		WVP wvp
 		{
-			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Mesh location
+			.World      = Matrix::CreateTranslation(Vector3::Zero).Transpose(),  // Model location
 			.View       = m_camera->GetViewMatrix().Transpose(),
 			.Projection = m_camera->GetProjectionMatrix().Transpose()
 		};
@@ -123,13 +104,39 @@ namespace Prism
 			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
 #endif
 		}
+	}
+
+	void App::Render()
+	{
+		m_renderer->BeginEvent(L"Clear");
+		m_renderer->ClearState();
+		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
+		m_renderer->ClearDepthStencilBuffer(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
+		m_renderer->EndEvent();
+
+		m_renderer->BeginEvent(L"Set Resources");
+		m_renderer->SetBackBufferRenderTarget();
+		m_renderer->SetWindowAsViewport();
+		if (m_isSolidRenderState)
+		{
+			m_renderer->SetSolidRenderState();
+		}
+		else
+		{
+			m_renderer->SetWireframeRenderState();
+		}
+
+		Gfx::Buffer* wvpBuffers[] = { m_wvpCBuffer.get() };
+		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span{ wvpBuffers });
+
+		m_renderer->EndEvent();
 
 		// Draw the mesh
 		m_renderer->SetShader(*m_shaderVS);
 		m_renderer->SetShader(*m_shaderPS);
 
 		m_renderer->BeginEvent(L"Draw Cube");
-		m_sceneGraph.GetRoot().ForEach([&](Node& node)
+		/*m_sceneGraph.GetRoot().ForEach([&](Node& node)
 			{
 				if (auto result = node.GetProperty<Vector3>(); result)
 				{
@@ -141,7 +148,8 @@ namespace Prism
 				{
 					result.value().get().Render(*m_renderer);
 				}
-			});
+			});*/
+		m_model->Render(*m_renderer);
 		m_renderer->EndEvent();
 
 		m_renderer->Present();
@@ -192,6 +200,11 @@ namespace Prism
 
 				m_camera->SetProjectionType(nextProjType);
 			}
+
+			if (e.Key == Elos::KeyCode::W)
+			{
+				m_isSolidRenderState = !m_isSolidRenderState;
+			}
 		};
 
 		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
@@ -234,16 +247,14 @@ namespace Prism
 				m_isMouseDown = false;
 			}
 		};
-		static float blendValue = 1.0f;
+
 		const auto OnWindowMouseWheel = [this](const Elos::Event::MouseWheelScrolled& e)
 		{
 			if (e.Wheel == Elos::KeyCode::MouseWheel::Vertical)
 			{
 				if (m_camera)
 				{
-					//m_camera->ZoomBy(e.Delta);
-					blendValue = std::clamp(blendValue += e.Delta * 0.05f, 0.0f, 1.0f);
-					m_camera->SetProjectionType(Gfx::Camera::ProjectionType::Perspective, blendValue);
+					m_camera->ZoomBy(e.Delta);
 				}
 			}
 		};
@@ -345,6 +356,33 @@ namespace Prism
 #endif
 	}
 
+	void App::LoadGLTF()
+	{
+		constexpr auto assetPath = PRISM_ASSETS_PATH "/DamagedHelmet.gltf";
+		bool success = false;
+
+		Elos::ScopedTimer loadTimer([&assetPath, &success](const Elos::Timer::TimeInfo& timeInfo)
+		{
+			if (success)
+			{
+				Log::Info("Imported mesh {} in {:3f}s", assetPath, timeInfo.TotalTime);
+			}
+		});
+
+		const auto& resourceFactory = m_renderer->GetResourceFactory();
+
+		Prism::Gfx::MeshImporter::ImportSettings settings{};
+		settings.FlipUVs = false;
+
+
+		auto modelResult = Gfx::Model::LoadFromFile(resourceFactory, assetPath, settings);
+		if (modelResult)
+		{
+			m_model = modelResult.value();
+			success = true;
+		}
+	}
+
 	void App::CreateConstantBuffer()
 	{
 		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Created constant buffer in {}s", timeInfo.TotalTime); });
@@ -372,7 +410,6 @@ namespace Prism
 		cube2.SetProperty(*m_mesh);
 		cube2.SetProperty(Vector3(2, 2, 2));
 
-		Log::Info("Scene Graph:\n{}", m_sceneGraph.GetRoot().GetDebugInfo());
+		//Log::Info("Scene Graph:\n{}", m_sceneGraph.GetRoot().GetDebugInfo());
 	}
-
 }
