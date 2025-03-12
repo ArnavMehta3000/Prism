@@ -1,5 +1,5 @@
 task("CompileShaders")
-set_menu {
+    set_menu {
         usage = "xmake CompileShaders [file]",
         description = "Compile HLSL shader files",
         options =
@@ -7,6 +7,7 @@ set_menu {
             { nil, "file", "v", nil, "The shader file to compile" }
         }
     }
+    
     on_run(function ()
         import("core.project.project")
         import("core.base.option")
@@ -143,15 +144,29 @@ task_end()
 rule("CompileHLSL")
     set_extensions(".hlsl")
 
-    on_build_file(function (target, sourcefile, opt)
-    	import("core.base.task")
+    after_build_file(function (target, sourcefile, opt)
+        import("core.base.task")
         import("core.project.depend")
-
-        task.run("CompileShaders", {file = sourcefile})
-
-        -- Remove the dependency on the source file
-        --depend.on_changed(function ()
-        --end, { files = sourcefile })
-
+        import("core.project.config")
+        
+        local current_mode = config.mode()
+        local filename_hash = hash.uuid4(sourcefile)
+        
+        -- File to store the last used mode in the temp directory
+        local tmpdir = os.tmpdir()
+        local mode_file = path.join(tmpdir, string.format("%s.mode", filename_hash))
+        
+        -- Function to run when dependencies change
+        depend.on_changed(function ()
+            -- Run shader compilation task
+            task.run("CompileShaders", {file = sourcefile})
+            
+            -- Save current mode to file in tmp directory
+            io.writefile(mode_file, current_mode or "")
+        end, {
+            -- Track both the source file and the build mode
+            files = sourcefile,
+            values = current_mode
+        })
     end)
 rule_end()
