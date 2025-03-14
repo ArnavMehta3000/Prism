@@ -1,6 +1,5 @@
 #pragma once
 #include "Graphics/Importers/MeshImporter.h"
-#include <vector>
 #include <filesystem>
 
 namespace fs = std::filesystem;
