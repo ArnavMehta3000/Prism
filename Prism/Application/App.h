@@ -1,5 +1,5 @@
 #pragma once
-#include "Application/WVP.h"
+#include "Application/Scene.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Camera.h"
 #include "Graphics/Model.h"
