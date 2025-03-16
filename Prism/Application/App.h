@@ -24,6 +24,9 @@ namespace Prism
 		void InitImGui();
 		void ShutdownImGui();
 
+		void RenderUI();
+		void RenderMainMenuBar();
+
 	private:
 		AppEvents                      m_appEvents;
 		bool                           m_isSolidRenderState = true;

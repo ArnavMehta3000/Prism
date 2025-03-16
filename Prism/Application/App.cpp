@@ -1,4 +1,5 @@
 #include "App.h"
+#include "Application/Globals.h"
 #include "Utils/Log.h"
 #include "Scenes/SimpleModel.h"
 #include <Elos/Window/Utils/WindowExtensions.h>
@@ -93,7 +94,8 @@ namespace Prism
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
+		
+		RenderUI();
 		if (m_scene) LIKELY
 		{
 			m_scene->RenderUI();
@@ -149,6 +151,39 @@ namespace Prism
 		ImGui::DestroyContext();
 	}
 
+	void App::RenderUI()
+	{
+		RenderMainMenuBar();
+	}
+
+	void App::RenderMainMenuBar()
+	{
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("Windows"))
+			{
+				if (ImGui::BeginMenu("Camera"))
+				{
+					ImGui::MenuItem("Camera Controls", nullptr, &Globals::g_isCameraControlsWindowOpen);
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Debug"))
+			{
+				if (ImGui::BeginMenu("Camera"))
+				{
+					ImGui::MenuItem("Camera Debug", nullptr, &Globals::g_isCameraDebugOverlayOpen);
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMainMenuBar();
+		}
+	}
+
 	void App::ProcessWindowEvents()
 	{
 		const auto OnWindowClosedEvent = [this](const Elos::Event::Closed&)
@@ -170,6 +205,11 @@ namespace Prism
 			{
 				m_isSolidRenderState = !m_isSolidRenderState;
 			}
+		};
+
+		const auto OnWindowKeyReleased = [this](const Elos::Event::KeyReleased& e)
+		{
+			m_appEvents.OnKeyReleased.Emit(e);
 		};
 
 		const auto OnWindowResizedEvent = [this](const Elos::Event::Resized& e)
@@ -209,6 +249,7 @@ namespace Prism
 			OnWindowClosedEvent,
 			OnWindowResizedEvent,
 			OnWindowKeyPressed,
+			OnWindowKeyReleased,
 			OnWindowMouseMoveRaw,
 			OnWindowMousePressed,
 			OnWindowMouseReleased,
@@ -233,7 +274,7 @@ namespace Prism
 			.Width        = windowSize.Width,
 			.Height       = windowSize.Height,
 			.BufferCount  = 2,
-			.SyncInterval = 0,  // No vsync
+			.SyncInterval = 1,  // No vsync
 			.Format       = DXGI_FORMAT_R8G8B8A8_UNORM,
 			.AllowTearing = true,
 			.Fullscreen   = false
