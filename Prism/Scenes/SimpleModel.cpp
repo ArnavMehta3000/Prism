@@ -26,7 +26,8 @@ namespace Prism
 		Scene::OnTick(timeInfo);
 		//const f32 radians = DirectX::XMConvertToRadians(static_cast<f32>(timeInfo.TotalTime) * 50.0f);
 		constexpr const f32 angle = DirectX::XMConvertToRadians(90.0f);
-		const Matrix world = Matrix::CreateRotationZ(angle) * Matrix::CreateRotationY(angle) * Matrix::CreateRotationX(angle);
+		Matrix world = Matrix::CreateRotationZ(angle) * Matrix::CreateRotationY(angle) * Matrix::CreateRotationX(angle);
+		world *= Matrix::CreateTranslation(Vector3::Zero);
 
 		WVP wvp
 		{

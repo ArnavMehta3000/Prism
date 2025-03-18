@@ -151,13 +151,23 @@ namespace Prism
 
 		if (ImGui::Begin("Camera Debug##Window", nullptr, windowFlags))
 		{
-			const Vector3 position = m_camera->GetPosition();
-			const Vector3 forward = m_camera->GetForwardVector();
+			const Vector3& currentVelocity = m_cameraController->GetCurrentVelocity();
+			const Vector3 position         = m_camera->GetPosition();
+			const Vector3 forward          = m_camera->GetForwardVector();
+			const f32 zoom                 = m_camera->GetZoomLevel();
+			const f32 fov                  = m_camera->GetFOV();
+			const f32 aspectRatio          = m_camera->GetAspectRatio();
 
 			ImGui::Text("Camera Debug Info");
 			ImGui::Separator();
 			ImGui::Text("Camera Position: %.2f, %.2f, %.2f", position.x, position.y, position.z);
 			ImGui::Text("Look Direction: %.2f, %.2f, %.2f", forward.x, forward.y, forward.z);
+			ImGui::Separator();
+			ImGui::Text("Current Velocity: %.2f, %.2f, %.2f", currentVelocity.x, currentVelocity.y, currentVelocity.z);
+			ImGui::Separator();
+			ImGui::Text("Zoom Level: %.2f", zoom);
+			ImGui::Text("FOV: %.2f", fov);
+			ImGui::Text("Aspect Ratio: %.2f", aspectRatio);
 
 			if (ImGui::BeginPopupContextWindow())
 			{
@@ -181,25 +191,48 @@ namespace Prism
 			return;
 		}
 
-		if (ImGui::Begin("Camera Controls##Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		if (ImGui::Begin("Camera Controls##Window", nullptr))
 		{
 			CameraController::Settings& settings = m_cameraController->GetSettings();
 
-			ImGui::Checkbox("Is First Person Mode", &settings.FirstPersonMode);
-			ImGui::Separator();
-			ImGui::DragFloat("Move Speed", &settings.MoveSpeed, 0.1f);
-			ImGui::DragFloat("Rotation Speed", &settings.RotationSpeed, 0.1f);
-			ImGui::DragFloat("Zoom Sensitivity", &settings.ZoomSensitivity, 0.05f);
-			ImGui::DragFloat("Orbit Distance", &settings.OrbitDistance, 0.1f);
-			ImGui::Separator();
-			ImGui::SliderFloat("Movement Smoothing", &settings.MovementSmoothingFactor, 0.0f, 1.0f);
-			ImGui::SliderFloat("Rotation Smoothing", &settings.RotationSmoothingFactor, 0.0f, 1.0f);
+			if (ImGui::CollapsingHeader("Movement"))
+			{
+				ImGui::DragFloat("Move Speed", &settings.MoveSpeed, 0.1f);
+				ImGui::DragFloat("Rotation Speed", &settings.RotationSpeed, 0.1f);
+				ImGui::DragFloat("Zoom Sensitivity", &settings.ZoomSensitivity, 0.05f);
+			}
+			if (ImGui::CollapsingHeader("Smoothing"))
+			{
+				ImGui::DragFloat("Movement Smooth Time", &settings.MovementSmoothTime, 0.01f);
+				ImGui::DragFloat("Movement Damping", &settings.MovementDamping, 0.01f);
+			}
+			if (ImGui::CollapsingHeader("Zoom & Projection"))
+			{
+				f32 projBlend = m_camera->GetProjectionBlend();
+				if (ImGui::SliderFloat("Projection", &projBlend, 0.0f, 1.0f))
+				{
+					const Gfx::Camera::ProjectionType type = projBlend > 0.5f ?
+						Gfx::Camera::ProjectionType::Orthographic :
+						Gfx::Camera::ProjectionType::Perspective;
+					
+					m_camera->SetProjectionType(type, 
+						(type == Gfx::Camera::ProjectionType::Orthographic) ?
+						projBlend : 1.0f - projBlend);
+				}
+
+				f32 zoom = m_camera->GetZoomLevel();
+				if (ImGui::SliderFloat("Zoom", &zoom, Gfx::Camera::MinZoomLevel, Gfx::Camera::MaxZoomLevel))
+				{
+					m_camera->SetZoomLevel(zoom);
+				}
+			}
 
 			m_cameraController->SetSettings(settings);
 
 			if (ImGui::Button("Reset Camera"))
 			{
 				m_cameraController->ResetCamera();
+				m_camera->SetZoomLevel(1.0f);
 			}
 		}
 		ImGui::End();
