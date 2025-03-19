@@ -1,14 +1,9 @@
-#include "Compiler.h"
-#include <d3dcompiler.h>
-#include <fstream>
-#include <print>
-#include <filesystem>
-#include <stdexcept>
-#include <memory>
-#include <wrl/client.h>
+module ShaderCompiler;
 
+import std;
+import <wrl/client.h>;
+import <d3dcompiler.h>;
 using Microsoft::WRL::ComPtr;
-
 namespace SC
 {
 	// Custom include handler

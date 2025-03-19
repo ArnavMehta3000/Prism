@@ -1,8 +1,9 @@
-#pragma once
-#include <string>
-#include <vector>
+export module ShaderCompiler;
 
-namespace SC
+import <string>;
+import <vector>;
+
+export namespace SC
 {
 	struct ShaderInputInfo
 	{

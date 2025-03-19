@@ -37,12 +37,13 @@ target("ShaderCompiler")
 	set_default(false)
 
 	add_includedirs("ShaderCompiler", { public = true })
+	add_files("ShaderCompiler/**.ixx")
 	add_files("ShaderCompiler/**.cpp")
-	add_headerfiles("(ShaderCompiler/**.h)", { install = true })
 
 	add_links("d3dcompiler", { public = true })
 	add_packages("cxxopts")
 
+	set_policy("build.c++.modules", true)
 	set_policy("build.fence", true)
 target_end()
 

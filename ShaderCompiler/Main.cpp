@@ -1,5 +1,6 @@
-#include "Compiler.h"
-#include <print>
+import ShaderCompiler;
+import <print>;
+
 #include <cxxopts.hpp>
 
 int main(int argc, char *argv[])
