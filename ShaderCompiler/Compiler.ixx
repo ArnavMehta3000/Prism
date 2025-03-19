@@ -1,5 +1,4 @@
 export module ShaderCompiler;
-
 import <string>;
 import <vector>;
 

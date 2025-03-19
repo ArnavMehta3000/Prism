@@ -1,9 +1,12 @@
-module ShaderCompiler;
+module;
+#include <wrl/client.h>
+#include <d3dcompiler.h>
 
+module ShaderCompiler;
 import std;
-import <wrl/client.h>;
-import <d3dcompiler.h>;
+
 using Microsoft::WRL::ComPtr;
+
 namespace SC
 {
 	// Custom include handler
