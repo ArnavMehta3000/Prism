@@ -31,19 +31,18 @@ set_runtimes(is_mode("debug") and "MTd" or "MT")
 add_requires("Elos 57332c984b0a02c4dc6921583057161f14ae66d5")
 add_requires("imgui 2d403a16144070a4cb46bb124318b20141e83cb4", { configs = { dx11 = true, win32 = true } })
 add_requires("cxxopts", "directxtk", "assimp")
+set_policy("build.c++.modules", true)
 
 target("ShaderCompiler")
 	set_kind("binary")
 	set_default(false)
 
-	add_includedirs("ShaderCompiler", { public = true })
 	add_files("ShaderCompiler/**.ixx")
 	add_files("ShaderCompiler/**.cpp")
 
 	add_links("d3dcompiler", { public = true })
 	add_packages("cxxopts")
 
-	set_policy("build.c++.modules", true)
 	set_policy("build.fence", true)
 target_end()
 
@@ -52,7 +51,8 @@ target("Prism")
 
 	add_includedirs("Prism", { public = true })
 	add_files("Prism/**.cpp")
-	add_files("Shaders/**.hlsl", {install = true })
+	add_files("Prism/**.ixx")
+	add_files("Shaders/**.hlsl", { install = true })
 	add_headerfiles("(Prism/**.h)", { install = true })
 
 	add_packages("Elos", "directxtk", "assimp", "imgui")
