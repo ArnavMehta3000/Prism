@@ -1,13 +1,14 @@
 module;
-#include "Graphics/Renderer.h"
+#include "Math/Math.h"
 #include "Graphics/Utils/ResourceFactory.h"
+#include "Utils/Log.h"
 #include <Elos/Common/Assert.h>
+#include <Elos/Utils/Timer.h>
 #include <DirectXColors.h>
 #include <imgui.h>
 
-module :SimpleModel;
-import Application:AppEvents;
-import Utils;
+module SimpleModelScene;
+import Scene;
 
 namespace Prism
 {

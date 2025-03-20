@@ -1,10 +1,9 @@
 #include "Graphics/Core/Device.h"
 #include "Graphics/Utils/DebugName.h"
+#include "Utils/Log.h"
 #include <Elos/Common/Assert.h>
 #include <array>
 #include <dxgidebug.h>
-
-import Utils;
 
 namespace Prism::Gfx::Core
 {

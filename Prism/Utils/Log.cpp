@@ -1,7 +1,6 @@
-module;
+#include "Log.h"
 #include <Windows.h>
 
-module :Log;
 namespace Prism
 {
 	static bool s_isLogInitialized = false;

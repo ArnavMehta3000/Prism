@@ -1,5 +1,7 @@
-export module Utils:Log;
-import std;
+#pragma once
+#include <print>
+#include <chrono>
+#include <ctime>
 
 namespace Prism
 {
@@ -8,19 +10,19 @@ namespace Prism
 	public:
 		static void Init();
 
-		template<typename... Args>
+		template <typename... Args>
 		static inline void Info(std::format_string<Args...> fmt, Args&&... args)
 		{
 			PrintLog(WHITE, "INFO", fmt, std::forward<Args>(args)...);
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		static inline void Warn(std::format_string<Args...> fmt, Args&&... args)
 		{
 			PrintLog(YELLOW, "WARN", fmt, std::forward<Args>(args)...);
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		static inline void Error(std::format_string<Args...> fmt, Args&&... args)
 		{
 			PrintLog(RED, "ERROR", fmt, std::forward<Args>(args)...);

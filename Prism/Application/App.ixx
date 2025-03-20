@@ -1,10 +1,9 @@
-module;
-#include "Graphics/Renderer.h"
-#include <Elos/Utils/Timer.h>
-
-export module Application:App;
+export module App;
 import std;
+import AppEvents;
 import Scene;
+import <Elos/Window/Window.h>;
+import <Elos/Utils/Timer.h>;
 
 export namespace Prism
 {

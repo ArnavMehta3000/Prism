@@ -1,4 +1,8 @@
+module;
+#include "Math/Math.h"
+
 module CameraController;
+import std;
 
 namespace Prism
 {

@@ -1,10 +1,11 @@
 module;
 #include "Graphics/Camera.h"
 #include <Elos/Utils/Timer.h>
-#include <Elos/Window/Input/KeyCode.h>
+#include <Elos/Event/Signal.h>
+#include <Elos/Window/Window.h>
 
 export module CameraController;
-import Application;
+import AppEvents;
 
 namespace Prism
 {

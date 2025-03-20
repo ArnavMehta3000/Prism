@@ -2,17 +2,19 @@ module;
 #include "Math/Math.h"
 #include "Graphics/Model.h"
 #include "Graphics/Camera.h"
-#include <Elos/Utils/Timer.h>
-#include <Elos/Event/Signal.h>
-#include <Elos/Window/Window.h>
+#include "Graphics/Renderer.h"
 
 export module Scene;
+import AppEvents;
+import CameraController;
+import <Elos/Utils/Timer.h>;
+import <Elos/Window/Window.h>;
 
 namespace Elos { class Window; }
 
 namespace Prism
 {
-	namespace Gfx { class Renderer; }
+	export namespace Gfx { class Renderer; }
 
 	export struct WVP
 	{

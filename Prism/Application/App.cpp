@@ -1,14 +1,16 @@
 module;
+#include "Utils/Log.h"
 #include "Application/Globals.h"
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
+#include <Windows.h>
 
-module :App;
-import UserScenes;
-import Utils;
+module App;
+import Scene;
+import SimpleModelScene;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -289,7 +291,12 @@ namespace Prism
 	{
 		Elos::ScopedTimer initTimer([](auto timeInfo) { Log::Info("Initialized scene in {}s", timeInfo.TotalTime); });
 		
-		m_scene = std::make_unique<SimpleModelScene>(&m_timer, m_window.get(), m_appEvents, m_renderer.get());
+		m_scene = std::make_unique<SimpleModelScene>(
+			static_cast<Elos::Timer*>(&m_timer),
+			static_cast<Elos::Window*>(m_window.get()),
+			m_appEvents,
+			static_cast<Gfx::Renderer*>(m_renderer.get())
+		);
 		m_scene->OnInit();
 	}
 }

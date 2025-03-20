@@ -1,9 +1,19 @@
 module;
 #include "Graphics/Resources/Buffers/ConstantBuffer.h"
 #include "Graphics/Resources/Shaders/Shader.h"
+#include "Graphics/Renderer.h"
+#include <Elos/Window/Window.h>
 
-export module UserScenes:SimpleModel;
-import Scene;
+export module SimpleModelScene;
+export import Scene;
+import std;
+import AppEvents;
+
+export namespace Elos
+{
+	class Window;
+	class Timer;
+}
 
 namespace Prism
 {
@@ -12,7 +22,7 @@ namespace Prism
 		static constexpr Elos::StringView AssetPath = PRISM_ASSETS_PATH "/DamagedHelmet.gltf";
 
 	public:
-		SimpleModelScene(Elos::Timer* appTimer, Elos::Window* appWindow, AppEvents& appEvents, Gfx::Renderer* renderer);
+		explicit SimpleModelScene(Elos::Timer* appTimer, Elos::Window* appWindow, AppEvents& appEvents, Gfx::Renderer* renderer);
 
 	private:
 		void OnInit() override;

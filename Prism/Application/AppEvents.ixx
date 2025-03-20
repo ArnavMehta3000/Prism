@@ -2,7 +2,7 @@ module;
 #include <Elos/Event/Signal.h>
 #include <Elos/Window/Window.h>
 
-export module Application:AppEvents;
+export module AppEvents;
 
 export namespace Prism
 {

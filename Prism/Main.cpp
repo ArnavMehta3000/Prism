@@ -1,3 +1,4 @@
+#include "Utils/Log.h"
 import Prism;
 
 int main()
