@@ -173,15 +173,8 @@ namespace Prism
 
 	void CameraController::ResetCamera()
 	{
-		m_position = Vector3(0.0f, 5.0f, -15.0f);
-
-		Vector3 direction = Vector3::Zero - m_position;
-		direction.Normalize();
-
-		// Calculate pitch and yaw from direction
-		m_euler.x = std::asinf(direction.y);
-		m_euler.y = std::atan2f(direction.x, direction.z);
-		m_euler.z = 0.0f;
+		m_position = Vector3(0.0f, 0.0f, 15.0f);
+		m_euler = Vector3::Zero;
 
 		UpdateCameraOrientation();
 
@@ -215,8 +208,7 @@ namespace Prism
 	
 	void CameraController::UpdateCameraOrientation()
 	{
-		Quaternion rotation = Quaternion::CreateFromYawPitchRoll(m_euler.y, m_euler.x, m_euler.z);
-		m_rotation = rotation;
+		m_rotation = Quaternion::CreateFromYawPitchRoll(m_euler);
 	}
 
 	void CameraController::UpdateCameraMovement(const f32 deltaTime)

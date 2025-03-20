@@ -1,4 +1,5 @@
 #pragma once
+#include "Application/CommonTypes.h"
 #include "Graphics/Importers/MeshImporter.h"
 #include <filesystem>
 
@@ -15,6 +16,8 @@ namespace Prism::Gfx
 		Model() = default;
 		~Model() = default;
 		explicit Model(std::vector<std::shared_ptr<Mesh>> meshes);
+
+		NODISCARD inline Transform& GetTransform() { return m_transform; }
 		
 		void AddMesh(std::shared_ptr<Mesh> mesh);
 		void Render(const Renderer& renderer) const;
@@ -23,6 +26,7 @@ namespace Prism::Gfx
 			const ResourceFactory& resourceFactory, const fs::path& filePath, const MeshImporter::ImportSettings& settings);
 
 	private:
+		Transform m_transform;
 		std::vector<std::shared_ptr<Mesh>> m_meshes;
 	};
 }

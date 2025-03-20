@@ -24,24 +24,15 @@ namespace Prism
 	void SimpleModelScene::OnTick(const Elos::Timer::TimeInfo& timeInfo)
 	{
 		Scene::OnTick(timeInfo);
-		//const f32 radians = DirectX::XMConvertToRadians(static_cast<f32>(timeInfo.TotalTime) * 50.0f);
-		constexpr const f32 angle = DirectX::XMConvertToRadians(90.0f);
-		Matrix world = Matrix::CreateRotationZ(angle) * Matrix::CreateRotationY(angle) * Matrix::CreateRotationX(angle);
-		world *= Matrix::CreateTranslation(Vector3::Zero);
 
-		WVP wvp
+		const WVP wvp
 		{
-			.World      = world.Transpose(),
+			.World      = m_model->GetTransform().GetTransposedWorldMatrix(),
 			.View       = m_camera->GetViewMatrix().Transpose(),
 			.Projection = m_camera->GetProjectionMatrix().Transpose()
 		};
 
-		if (auto result = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp); !result)
-		{
-#ifdef PRISM_BUILD_DEBUG
-			Elos::ASSERT(false).Msg("Failed to update constant buffer").Throw();
-#endif
-		}
+		std::ignore = m_renderer->UpdateConstantBuffer(*m_wvpCBuffer, wvp);
 	}
 	
 	void SimpleModelScene::Render()
@@ -71,6 +62,22 @@ namespace Prism
 	void SimpleModelScene::RenderUI()
 	{
 		Scene::RenderUI();
+
+		if (ImGui::Begin("Model Controls"))
+		{
+			Transform& transform = m_model->GetTransform();
+
+			bool modified = false;
+			modified |= ImGui::DragFloat3("Position", &transform.Position.x, 0.1f);
+			modified |= ImGui::DragFloat3("Rotation", &transform.Rotation.x, 0.1f);
+			modified |= ImGui::DragFloat3("Scale", &transform.Scale.x, 0.1f);
+			
+			if (modified)
+			{
+				transform.UpdateWorldMatrix();
+			}
+		}
+		ImGui::End();
 	}
 	
 	void SimpleModelScene::OnShutdown()

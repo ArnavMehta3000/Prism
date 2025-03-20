@@ -1,8 +1,7 @@
 #pragma once
-#include "Math/Math.h"
+#include "Application/CommonTypes.h"
 #include "Application/AppEvents.h"
 #include "Application/CameraController.h"
-
 #include "Graphics/Model.h"
 #include <Elos/Utils/Timer.h>
 
@@ -11,13 +10,6 @@ namespace Elos { class Window; }
 namespace Prism
 {
 	namespace Gfx { class Renderer; }
-
-	struct WVP
-	{
-		Matrix World;
-		Matrix View;
-		Matrix Projection;
-	};
 
 	class Scene
 	{

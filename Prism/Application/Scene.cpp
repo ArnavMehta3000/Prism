@@ -22,7 +22,7 @@ namespace Prism
 		auto [width, height]   = m_appWindow->GetSize();
 		
 		cameraDesc.AspectRatio = static_cast<f32>(width) / static_cast<f32>(height);
-		cameraDesc.Position    = Vector3(0.0f, 5.0f, -15.0f);
+		cameraDesc.Position    = Vector3(0.0f, 0.0f, 15.0f);
 		cameraDesc.LookAt      = Vector3::Zero;
 		m_camera               = std::make_unique<Gfx::Camera>(cameraDesc);
 		m_cameraController     = std::make_unique<CameraController>(m_camera.get());
