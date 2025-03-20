@@ -1,5 +1,4 @@
-#include "Utils/Log.h"
-#include "Application/App.h"
+import Prism;
 
 int main()
 {

@@ -1,10 +1,12 @@
-#pragma once
+module;
 #include "Math/Math.h"
-#include "Application/AppEvents.h"
-#include "Application/CameraController.h"
-
 #include "Graphics/Model.h"
+#include "Graphics/Camera.h"
 #include <Elos/Utils/Timer.h>
+#include <Elos/Event/Signal.h>
+#include <Elos/Window/Window.h>
+
+export module Scene;
 
 namespace Elos { class Window; }
 
@@ -12,14 +14,14 @@ namespace Prism
 {
 	namespace Gfx { class Renderer; }
 
-	struct WVP
+	export struct WVP
 	{
 		Matrix World;
 		Matrix View;
 		Matrix Projection;
 	};
 
-	class Scene
+	export class Scene
 	{
 	public:
 		Scene(Elos::Timer* appTimer, Elos::Window* appWindow, AppEvents& appEvents, Gfx::Renderer* renderer);

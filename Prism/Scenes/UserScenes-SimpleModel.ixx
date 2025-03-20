@@ -1,11 +1,13 @@
-#pragma once
-#include "Application/Scene.h"
+module;
 #include "Graphics/Resources/Buffers/ConstantBuffer.h"
 #include "Graphics/Resources/Shaders/Shader.h"
 
+export module UserScenes:SimpleModel;
+import Scene;
+
 namespace Prism
 {
-	class SimpleModelScene : public Scene
+	export class SimpleModelScene : public Scene
 	{
 		static constexpr Elos::StringView AssetPath = PRISM_ASSETS_PATH "/DamagedHelmet.gltf";
 

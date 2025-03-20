@@ -1,8 +1,11 @@
-#include "Scene.h"
+module;
 #include "Application/Globals.h"
 #include <Elos/Window/Window.h>
 #include <Elos/Common/Assert.h>
 #include <imgui.h>
+
+module Scene;
+import Application;
 
 namespace Prism
 {

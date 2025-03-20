@@ -1,12 +1,14 @@
-#pragma once
+module;
 #include "Graphics/Camera.h"
-#include "Application/AppEvents.h"
 #include <Elos/Utils/Timer.h>
 #include <Elos/Window/Input/KeyCode.h>
 
+export module CameraController;
+import Application;
+
 namespace Prism
 {
-	class CameraController
+	export class CameraController
 	{
 	public:
 		struct Settings

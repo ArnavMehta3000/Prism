@@ -1,12 +1,14 @@
-#include "App.h"
+module;
 #include "Application/Globals.h"
-#include "Utils/Log.h"
-#include "Scenes/SimpleModel.h"
 #include <Elos/Window/Utils/WindowExtensions.h>
 #include <Elos/Common/Assert.h>
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
+
+module :App;
+import UserScenes;
+import Utils;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

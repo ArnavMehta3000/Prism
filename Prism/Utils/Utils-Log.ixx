@@ -1,7 +1,5 @@
-#pragma once
-#include <print>
-#include <chrono>
-#include <ctime>
+export module Utils:Log;
+import std;
 
 namespace Prism
 {

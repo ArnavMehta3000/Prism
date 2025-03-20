@@ -1,4 +1,4 @@
-#include "CameraController.h"
+module CameraController;
 
 namespace Prism
 {

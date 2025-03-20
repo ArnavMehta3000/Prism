@@ -1,10 +1,11 @@
 #include "Renderer.h"
-#include "Utils/Log.h"
 #include "Graphics/Utils/ResourceFactory.h"
 #include "Graphics/Utils/DebugName.h"
 #include <Elos/Common/Assert.h>
 #include <Elos/Window/Window.h>
 #include <imgui_impl_dx11.h>
+
+import Utils;
 
 namespace Prism::Gfx
 {

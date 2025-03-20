@@ -1,8 +1,10 @@
-#pragma once
+module;
 #include <Elos/Event/Signal.h>
 #include <Elos/Window/Window.h>
 
-namespace Prism
+export module Application:AppEvents;
+
+export namespace Prism
 {
 	struct AppEvents
 	{

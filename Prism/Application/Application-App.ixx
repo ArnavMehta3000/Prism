@@ -1,10 +1,12 @@
-#pragma once
-#include "Application/AppEvents.h"
-#include "Application/Scene.h"
+module;
 #include "Graphics/Renderer.h"
 #include <Elos/Utils/Timer.h>
 
-namespace Prism
+export module Application:App;
+import std;
+import Scene;
+
+export namespace Prism
 {
 	class App
 	{
