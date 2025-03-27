@@ -28,7 +28,7 @@ add_tests("CompileSuccess", { build_should_pass = true, group = "Compilation" })
 
 set_runtimes(is_mode("debug") and "MTd" or "MT")
 
-add_requires("Elos 57332c984b0a02c4dc6921583057161f14ae66d5")
+add_requires("Elos 46471e408be64253b8638614f71bd52307899c7e")
 add_requires("imgui 2d403a16144070a4cb46bb124318b20141e83cb4", { configs = { dx11 = true, win32 = true } })
 add_requires("cxxopts", "directxtk", "assimp")
 
