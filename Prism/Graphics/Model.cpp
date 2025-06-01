@@ -1,12 +1,21 @@
 #include "Graphics/Model.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Utils/ResourceFactory.h"
+#include "Application/Globals.h"
 
 namespace Prism::Gfx
 {
-	Model::Model(std::vector<std::shared_ptr<Mesh>> meshes)
-		: m_meshes(std::move(meshes))
+	Model::Model(const MeshImporter::MeshData& meshData)
+		: m_meshes(meshData.Meshes)
+		, m_textures(meshData.Textures)
+		, m_textureMap(meshData.TextureMap)
+	{		
+	}
+	
+	Model::~Model()
 	{
+		m_meshes.clear();
+		m_textures.clear();
 	}
 	
 	void Model::AddMesh(std::shared_ptr<Mesh> mesh)
@@ -21,6 +30,13 @@ namespace Prism::Gfx
 	{
 		for (const auto& mesh : m_meshes)
 		{
+			if (!m_textures.empty())
+			{
+				auto& texture = m_textures[Globals::g_textureNumber];
+				ID3D11ShaderResourceView* srvs[] = { texture->GetSRV() };
+				renderer.SetShaderResourceViews(Shader::Type::Pixel, 0, std::span{ srvs });
+			}
+
 			if (mesh) LIKELY
 			{
 				mesh->Render(renderer);
@@ -37,7 +53,6 @@ namespace Prism::Gfx
 		{
 			return std::unexpected(importResult.error());
 		}
-
-		return std::make_shared<Model>(importResult.value().Meshes);
+		return std::make_shared<Model>(importResult.value());;
 	}
 }

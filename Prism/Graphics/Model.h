@@ -14,10 +14,11 @@ namespace Prism::Gfx
 	{
 	public:
 		Model() = default;
-		~Model() = default;
-		explicit Model(std::vector<std::shared_ptr<Mesh>> meshes);
+		~Model();
+		explicit Model(const MeshImporter::MeshData& meshData);
 
 		NODISCARD inline Transform& GetTransform() { return m_transform; }
+		NODISCARD inline auto& GetTextures() { return m_textures; }
 		
 		void AddMesh(std::shared_ptr<Mesh> mesh);
 		void Render(const Renderer& renderer) const;
@@ -26,7 +27,9 @@ namespace Prism::Gfx
 			const ResourceFactory& resourceFactory, const fs::path& filePath, const MeshImporter::ImportSettings& settings);
 
 	private:
-		Transform m_transform;
-		std::vector<std::shared_ptr<Mesh>> m_meshes;
+		Transform                               m_transform;
+		std::vector<std::shared_ptr<Mesh>>      m_meshes;
+		std::vector<std::shared_ptr<Texture2D>> m_textures;
+		std::unordered_map<Elos::String, u64>   m_textureMap;
 	};
 }

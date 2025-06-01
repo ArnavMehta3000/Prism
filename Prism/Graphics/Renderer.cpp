@@ -334,6 +334,108 @@ namespace Prism::Gfx
 		m_device->GetContext()->RSSetState(state);
 	}
 
+	void Renderer::SetSamplerState(const Shader::Type shaderType, const u32 slot, const std::span<DX11::ISamplerState* const> samplers) const
+	{
+		DX11::IDeviceContext* const context = m_device->GetContext();
+		ID3D11SamplerState* const* samplerData = samplers.data();
+
+		switch (shaderType)
+		{
+			using enum Shader::Type;
+
+		case Vertex:
+		{
+			context->VSSetSamplers(slot, 1, samplerData);
+			break;
+		}
+
+		case Pixel:
+		{
+			context->PSSetSamplers(slot, 1, samplerData);
+			break;
+		}
+
+		case Compute:
+		{
+			context->CSSetSamplers(slot, 1, samplerData);
+			break;
+		}
+
+		case Geometry:
+		{
+			context->GSSetSamplers(slot, 1, samplerData);
+			break;
+		}
+
+		case Domain:
+		{
+			context->DSSetSamplers(slot, 1, samplerData);
+			break;
+
+		}
+
+		case Hull:
+		{
+			context->HSSetSamplers(slot, 1, samplerData);
+			break;
+		}
+
+		default:
+			break;
+		}
+	}
+
+	void Renderer::SetShaderResourceViews(const Shader::Type shaderType, const u32 slot, std::span<ID3D11ShaderResourceView* const> views) const
+	{
+		DX11::IDeviceContext* const context = m_device->GetContext();
+		ID3D11ShaderResourceView* const* viewData = views.data();
+
+		switch (shaderType)
+		{
+			using enum Shader::Type;
+
+		case Vertex:
+		{
+			context->VSSetShaderResources(slot, 1, viewData);
+			break;
+		}
+
+		case Pixel:
+		{
+			context->PSSetShaderResources(slot, 1, viewData);
+			break;
+		}
+
+		case Compute:
+		{
+			context->CSSetShaderResources(slot, 1, viewData);
+			break;
+		}
+
+		case Geometry:
+		{
+			context->GSSetShaderResources(slot, 1, viewData);
+			break;
+		}
+
+		case Domain:
+		{
+			context->DSSetShaderResources(slot, 1, viewData);
+			break;
+		}
+
+		case Hull:
+		{
+			context->HSSetShaderResources(slot, 1, viewData);
+			break;
+		}
+
+		default:
+			break;
+		}
+		
+	}
+
 	void Renderer::SetSolidRenderState() const
 	{
 		SetRasterizerState(m_solidRasterizerState.Get());

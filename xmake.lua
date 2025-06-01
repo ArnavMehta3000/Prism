@@ -28,7 +28,7 @@ add_tests("CompileSuccess", { build_should_pass = true, group = "Compilation" })
 
 set_runtimes(is_mode("debug") and "MTd" or "MT")
 
-add_requires("Elos 46471e408be64253b8638614f71bd52307899c7e")
+add_requires("Elos 98d44a142953be2eaab83030d3d1f527ebf81978")
 add_requires("imgui 2d403a16144070a4cb46bb124318b20141e83cb4", { configs = { dx11 = true, win32 = true } })
 add_requires("cxxopts", "directxtk", "assimp")
 
@@ -51,7 +51,7 @@ target("Prism")
 
 	add_includedirs("Prism", { public = true })
 	add_files("Prism/**.cpp")
-	add_files("Shaders/**.hlsl", {install = true })
+	add_files("Shaders/**.hlsl", { install = true })
 	add_headerfiles("(Prism/**.h)", { install = true })
 
 	add_packages("Elos", "directxtk", "assimp", "imgui")

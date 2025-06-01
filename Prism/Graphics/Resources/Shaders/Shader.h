@@ -44,45 +44,45 @@ namespace Prism::Gfx
 
 #pragma region Shader Datas
 		template <typename T>
-		struct ShaderDataBase
+		struct ShaderData
 		{
 			ComPtr<T> Shader;
 			std::vector<byte> ByteCode;
 
-			ShaderDataBase() : Shader(nullptr) {}
-			virtual ~ShaderDataBase() { Shader.Reset(); }
+			ShaderData() : Shader(nullptr) {}
+			virtual ~ShaderData() { Shader.Reset(); }
 		};
 
-		struct VertexShaderData : public ShaderDataBase<DX11::IVertexShader>
+		struct VertexShaderData : public ShaderData<DX11::IVertexShader>
 		{
 			ComPtr<DX11::IInputLayout>  Layout;
 			static constexpr Type Type = Type::Vertex;
 
-			VertexShaderData() : ShaderDataBase() {}
+			VertexShaderData() : ShaderData() {}
 			~VertexShaderData() { Layout.Reset();}
 		};
 
-		struct PixelShaderData : public ShaderDataBase<DX11::IPixelShader>
+		struct PixelShaderData : public ShaderData<DX11::IPixelShader>
 		{
 			static constexpr Type Type = Type::Pixel;
 		};
 
-		struct ComputeShaderData : public ShaderDataBase<DX11::IComputeShader>
+		struct ComputeShaderData : public ShaderData<DX11::IComputeShader>
 		{
 			static constexpr Type Type = Type::Compute;
 		};
 
-		struct GeometryShaderData : public ShaderDataBase<DX11::IGeometryShader>
+		struct GeometryShaderData : public ShaderData<DX11::IGeometryShader>
 		{
 			static constexpr Type Type = Type::Geometry;
 		};
 
-		struct DomainShaderData : public ShaderDataBase<DX11::IDomainShader>
+		struct DomainShaderData : public ShaderData<DX11::IDomainShader>
 		{
 			static constexpr Type Type = Type::Domain;
 		};
 
-		struct HullShaderData : public ShaderDataBase<DX11::IHullShader>
+		struct HullShaderData : public ShaderData<DX11::IHullShader>
 		{
 			static constexpr Type Type = Type::Hull;
 		};

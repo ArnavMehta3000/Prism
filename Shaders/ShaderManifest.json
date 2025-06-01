@@ -18,7 +18,6 @@
 				}
 			}
 		},
-
 		{
 			"file": "SimpleModel.hlsl",
 			"stages": {
@@ -31,6 +30,31 @@
 					"entry": "PSMain",
 					"profile": "ps_5_0",
 					"defines": [ "BUILD_AS_PS=1" ]
+				}
+			}
+		},
+		{
+			"file": "FSTriangle.hlsl",
+			"stages": {
+				"vs": {
+					"entry": "VSMain",
+					"profile": "vs_5_0",
+					"defines": [ "BUILD_AS_VS=1" ]
+				},
+				"ps": {
+					"entry": "PSMain",
+					"profile": "ps_5_0",
+					"defines": [ "BUILD_AS_PS=1" ]
+				}
+			}
+		},
+		{
+			"file": "FSTriangleVert.hlsl",
+			"stages": {
+				"vs": {
+					"entry": "VSMain",
+					"profile": "vs_5_0",
+					"defines": [ "BUILD_AS_VS=1" ]
 				}
 			}
 		}

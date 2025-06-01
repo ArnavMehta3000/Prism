@@ -55,6 +55,9 @@ PSInput VSMain(VSInput input)
 
 #if defined(BUILD_AS_PS)
 
+Texture2D MeshTexture: register(t0);
+SamplerState LinearSampler : register(s0);
+
 float4 PSMain(PSInput input) : SV_Target
 {
     // Simple directional light calculation
@@ -74,8 +77,9 @@ float4 PSMain(PSInput input) : SV_Target
 
     // Apply lighting to base color
     float4 finalColor = float4(baseColor.rgb * lighting, baseColor.a);
+    float4 finalTextureColor = MeshTexture.Sample(LinearSampler, input.TexCoord);
 
-    return finalColor;
+	return finalTextureColor;
 }
 
 #endif // BUILD_AS_PS

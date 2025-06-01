@@ -1,5 +1,6 @@
 #include "SimpleModel.h"
 #include "Application/AppEvents.h"
+#include "Application/Globals.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Utils/ResourceFactory.h"
 #include "Utils/Log.h"
@@ -19,6 +20,7 @@ namespace Prism
 		LoadModel();
 		LoadShaders();
 		LoadBuffers();
+		LoadSampler();
 	}
 	
 	void SimpleModelScene::OnTick(const Elos::Timer::TimeInfo& timeInfo)
@@ -37,25 +39,39 @@ namespace Prism
 	
 	void SimpleModelScene::Render()
 	{
-		m_renderer->BeginEvent(L"Clear Back Buffers");
-		m_renderer->ClearState();
-		m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
-		m_renderer->ClearDepthStencilBuffer(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
-		m_renderer->EndEvent();
+		m_renderer->BeginEvent(L"Frame");
+		{
 
-		m_renderer->BeginEvent(L"Set Resources");
-		m_renderer->SetBackBufferRenderTarget();
-		m_renderer->SetWindowAsViewport();
-		
-		Gfx::Buffer* wvpBuffers[] = { m_wvpCBuffer.get() };
-		m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span{ wvpBuffers });
-		m_renderer->SetShader(*m_shaderVS);
-		m_renderer->SetShader(*m_shaderPS);
-		m_renderer->EndEvent();
+			m_renderer->BeginEvent(L"Clear Back Buffers");
+			{
+				m_renderer->ClearState();
+				m_renderer->ClearBackBuffer(DirectX::Colors::CadetBlue);
+				m_renderer->ClearDepthStencilBuffer(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
+			}
+			m_renderer->EndEvent();
 
-		// Draw the model
-		m_renderer->BeginEvent(L"Draw model");
-		m_model->Render(*m_renderer);
+			m_renderer->BeginEvent(L"Set Resources");
+			{
+				m_renderer->SetBackBufferRenderTarget();
+				m_renderer->SetWindowAsViewport();
+
+				Gfx::Buffer* wvpBuffers[] = { m_wvpCBuffer.get() };
+				m_renderer->SetConstantBuffers(0, Gfx::Shader::Type::Vertex, std::span{ wvpBuffers });
+				m_renderer->SetShader(*m_shaderVS);
+				m_renderer->SetShader(*m_shaderPS);
+				
+				DX11::ISamplerState* samplers[] = { m_linearSampler.Get() };
+				m_renderer->SetSamplerState(Gfx::Shader::Type::Pixel, 0, std::span{ samplers });
+			}
+			m_renderer->EndEvent();
+
+			// Draw the model
+			m_renderer->BeginEvent(L"Draw model");
+			{
+				m_model->Render(*m_renderer);
+			}
+			m_renderer->EndEvent();
+		}
 		m_renderer->EndEvent();
 	}
 	
@@ -76,12 +92,15 @@ namespace Prism
 			{
 				transform.UpdateWorldMatrix();
 			}
+			
+			ImGui::DragInt("Texture", &Globals::g_textureNumber, 1, 0, m_model->GetTextures().size() - 1);
 		}
 		ImGui::End();
 	}
 	
 	void SimpleModelScene::OnShutdown()
 	{
+		m_linearSampler.Reset();
 		m_wvpCBuffer.reset();
 		m_shaderVS.reset();
 		m_shaderPS.reset();
@@ -91,7 +110,6 @@ namespace Prism
 	void SimpleModelScene::LoadModel()
 	{
 		bool success = false;
-
 		Elos::ScopedTimer loadTimer([&success](const Elos::Timer::TimeInfo& timeInfo)
 		{
 			if (success)
@@ -162,5 +180,24 @@ namespace Prism
 		{
 			m_wvpCBuffer = std::move(cbResult.value());
 		}
+	}
+	
+	void SimpleModelScene::LoadSampler()
+	{
+		D3D11_SAMPLER_DESC sampDesc = {};
+		sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // Linear filtering for min, mag, and mip
+		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;    // Wrap addressing mode for U coordinate
+		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;    // Wrap addressing mode for V coordinate
+		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;    // Wrap addressing mode for W coordinate
+		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // No comparison
+		sampDesc.MinLOD = 0;                               // Minimum mip level
+		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;               // Maximum mip level
+
+		HRESULT hr = m_renderer->GetDevice()->GetDevice()->CreateSamplerState(&sampDesc, &m_linearSampler);
+		if (FAILED(hr))
+		{
+			// Handle error
+		}
+
 	}
 }

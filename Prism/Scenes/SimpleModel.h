@@ -21,11 +21,13 @@ namespace Prism
 		void LoadModel();
 		void LoadShaders();
 		void LoadBuffers();
+		void LoadSampler();
 
 	private:
 		std::shared_ptr<Prism::Gfx::Model>        m_model;
 		std::shared_ptr<Gfx::ConstantBuffer<WVP>> m_wvpCBuffer;
 		std::shared_ptr<Gfx::Shader>              m_shaderVS;
 		std::shared_ptr<Gfx::Shader>              m_shaderPS;
+		ComPtr<DX11::ISamplerState>               m_linearSampler;
 	};
 }

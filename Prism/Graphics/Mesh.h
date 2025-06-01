@@ -3,6 +3,7 @@
 #include "Graphics/DX11Types.h"
 #include "Graphics/Resources/Buffers/VertexBuffer.h"
 #include "Graphics/Resources/Buffers/IndexBuffer.h"
+#include "Graphics/Resources/Texture2D.h"
 #include <Elos/Common/String.h>
 #include <Elos/Common/FunctionMacros.h>
 #include <memory>
@@ -41,9 +42,10 @@ namespace Prism::Gfx
 
 		void Render(const Renderer& renderer) const noexcept;
 
-		NODISCARD inline D3D11_PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
-		NODISCARD inline VertexBuffer* GetVertexBuffer() const noexcept { return m_vertexBuffer.get(); }
-		NODISCARD inline IndexBuffer* GetIndexBuffer() const noexcept { return m_indexBuffer.get(); }
+		inline NODISCARD D3D11_PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
+		inline NODISCARD VertexBuffer* GetVertexBuffer() const noexcept { return m_vertexBuffer.get(); }
+		inline NODISCARD IndexBuffer* GetIndexBuffer() const noexcept { return m_indexBuffer.get(); }
+		inline NODISCARD Texture2D* GetTexture() const noexcept { return m_texture.get(); }
 
 	private:
 		Mesh() noexcept = default;
@@ -51,6 +53,7 @@ namespace Prism::Gfx
 	private:
 		std::shared_ptr<VertexBuffer> m_vertexBuffer;
 		std::shared_ptr<IndexBuffer>  m_indexBuffer;
+		std::shared_ptr<Texture2D>    m_texture;
 		D3D11_PRIMITIVE_TOPOLOGY      m_topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	};
 }

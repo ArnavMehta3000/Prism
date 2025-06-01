@@ -131,8 +131,8 @@ namespace Prism
 			ImVec2 workPos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
 			ImVec2 workSize = viewport->WorkSize;
 
-			windowPos.x = (location & 1) ? (workPos.x + workSize.x - PAD) : (workPos.x + PAD);
-			windowPos.y = (location & 2) ? (workPos.y + workSize.y - PAD) : (workPos.y + PAD);
+			windowPos.x      = (location & 1) ? (workPos.x + workSize.x - PAD) : (workPos.x + PAD);
+			windowPos.y      = (location & 2) ? (workPos.y + workSize.y - PAD) : (workPos.y + PAD);
 			windowPosPivot.x = (location & 1) ? 1.0f : 0.0f;
 			windowPosPivot.y = (location & 2) ? 1.0f : 0.0f;
 

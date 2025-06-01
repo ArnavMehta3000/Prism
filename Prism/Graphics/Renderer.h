@@ -53,6 +53,8 @@ namespace Prism::Gfx
 		void SetConstantBuffers(u32 startSlot, const Shader::Type shaderType, const std::span<const Buffer* const> buffers) const;
 		void SetDepthStencilState(DX11::IDepthStencilState* state, u32 stencilRef = 0) const;
 		void SetRasterizerState(DX11::IRasterizerState* state) const;
+		void SetSamplerState(const Shader::Type shaderType, const u32 slot, const std::span<DX11::ISamplerState* const> samplers) const;
+		void SetShaderResourceViews(const Shader::Type shaderType, const u32 slot, std::span<ID3D11ShaderResourceView* const> views) const;
 		void SetSolidRenderState() const;
 		void SetWireframeRenderState() const;
 		void SetIndexBuffer(const IndexBuffer& buffer, const DXGI_FORMAT format = DXGI_FORMAT_R32_UINT, const u32 offset = 0) const noexcept;
@@ -62,13 +64,14 @@ namespace Prism::Gfx
 		template<typename T>
 		std::expected<void, Buffer::BufferError> UpdateConstantBuffer(ConstantBuffer<T>& constantBuffer, const T& data) const { return constantBuffer.Update(m_device->GetContext(), data); }
 
+		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
+
 	private:
 		void CreateDevice(const Core::Device::DeviceDesc& deviceDesc);
 		void CreateSwapChain(const Core::SwapChain::SwapChainDesc& swapChainDesc);
 		void CreateDefaultStates();
 		std::expected<void, Core::SwapChain::SwapChainError> CreateDepthStencilBuffer();
 
-		NODISCARD inline Core::Device* GetDevice() const noexcept { return m_device.get(); }
 		NODISCARD inline Core::SwapChain* GetSwapChain() const noexcept { return m_swapChain.get(); }
 
 	private:

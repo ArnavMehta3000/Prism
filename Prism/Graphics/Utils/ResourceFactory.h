@@ -4,6 +4,7 @@
 #include "Graphics/Resources/Buffers/IndexBuffer.h"
 #include "Graphics/Resources/Buffers/ConstantBuffer.h"
 #include "Graphics/Resources/Shaders/Shader.h"
+#include "Graphics/Resources/RenderTarget.h"
 #include "Graphics/Mesh.h"
 
 namespace Prism::Gfx
@@ -34,6 +35,9 @@ namespace Prism::Gfx
 
 		template <Shader::Type T>
 		NODISCARD std::expected<std::shared_ptr<Shader>, Shader::ShaderError> CreateShader(const fs::path& path) const;
+
+		NODISCARD std::expected<std::shared_ptr<Texture2D>, Texture2D::TextureError> CreateTexture2D(const Texture2D::Texture2DDesc& desc, const void* pixelData = nullptr, const u32 rowPitch = 0) const;
+		NODISCARD std::expected<std::shared_ptr<Texture2D>, Texture2D::TextureError> CreateTextureFromWIC(const byte* data, u32 dataSize) const;
 
 	private:
 		NODISCARD std::expected<void, Shader::ShaderError> CreateInputLayoutFromVS(Shader::VertexShaderData* vsData) const;

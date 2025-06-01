@@ -2,6 +2,7 @@
 #include <d3d11shader.h>
 #include <d3dcompiler.h>
 #include <Elos/Common/Assert.h>
+#include <directxtk/WICTextureLoader.h>
 
 namespace Prism::Gfx
 {
@@ -124,6 +125,93 @@ namespace Prism::Gfx
 		return mesh;
 	}
 	
+	std::expected<std::shared_ptr<Texture2D>, Texture2D::TextureError> ResourceFactory::CreateTexture2D(const Texture2D::Texture2DDesc& desc, const void* pixelData, const u32 rowPitch) const
+	{
+		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
+
+		const D3D11_SUBRESOURCE_DATA initData
+		{
+			.pSysMem          = pixelData,
+			.SysMemPitch      = rowPitch,
+			.SysMemSlicePitch = 0
+		};
+
+		HRESULT hr = texture->InitFromData(m_device->GetDevice(), desc, pixelData ? &initData : nullptr);
+		if (FAILED(hr))
+		{
+			return std::unexpected(Texture2D::TextureError
+			{
+				.Type      = Texture2D::TextureError::Type::CreateTextureFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to create texture"
+			});
+		}
+			
+		return texture;
+	}
+
+	std::expected<std::shared_ptr<Texture2D>, Texture2D::TextureError> ResourceFactory::CreateTextureFromWIC(const byte* data, u32 dataSize) const
+	{
+		ComPtr<ID3D11Resource> resource;
+		ComPtr<ID3D11ShaderResourceView> srv;
+		HRESULT hr = DirectX::CreateWICTextureFromMemoryEx(
+			m_device->GetDevice(),
+			m_device->GetContext(),
+			reinterpret_cast<const uint8_t*>(data),
+			dataSize,
+			0, // Max size
+			D3D11_USAGE_DEFAULT,
+			D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+			0, // CPU acces flags
+			0, // Misc flags
+			DirectX::DX11::WIC_LOADER_DEFAULT,
+			&resource,
+			&srv
+		);
+
+		if (FAILED(hr))
+		{
+			return std::unexpected(Texture2D::TextureError
+			{
+				.Type      = Texture2D::TextureError::Type::CreateTextureFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to create texture from WIC data"
+			});
+		}
+
+		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
+		if (FAILED(resource.As(&texture->m_texture)))
+		{
+			return std::unexpected(Texture2D::TextureError
+			{
+				.Type      = Texture2D::TextureError::Type::CreateTextureFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to cast WIC resource to ID3D11Texture2D"
+			});
+		}
+
+		Elos::ASSERT(texture->m_texture.Get()).Msg("Failed to cast WIC resource to ID3D11Texture2D").Throw();
+
+		D3D11_TEXTURE2D_DESC texDesc;
+		texture->m_texture->GetDesc(&texDesc);
+			
+		texture->m_format     = texDesc.Format;
+		texture->m_dimensions = { texDesc.Width, texDesc.Height };
+
+		if (FAILED(srv.As(&texture->m_srv)))
+		{
+			return std::unexpected(Texture2D::TextureError
+			{
+				.Type      = Texture2D::TextureError::Type::CreateTextureFailed,
+				.ErrorCode = hr,
+				.Message   = "Failed to cast WIC SRV to ID3D11ShaderResourceView"
+			});
+		}
+		
+
+		return texture;
+	}
+
 	std::expected<void, Shader::ShaderError> ResourceFactory::CreateInputLayoutFromVS(Shader::VertexShaderData* vsData) const
 	{
 		// Ref: https://learn.microsoft.com/en-us/windows/win32/api/d3d11shader/nn-d3d11shader-id3d11shaderreflection
