@@ -4,10 +4,10 @@ task("CompileShaders")
         description = "Compile HLSL shader files",
         options =
         {
-            { nil, "file", "v", nil, "The shader file to compile" }
+            { nil, "filename", "v", nil, "The shader file to compile" }
         }
     }
-    
+
     on_run(function ()
         import("core.project.project")
         import("core.base.option")
@@ -148,19 +148,19 @@ rule("CompileHLSL")
         import("core.base.task")
         import("core.project.depend")
         import("core.project.config")
-        
+
         local current_mode = config.mode()
         local filename_hash = hash.uuid4(sourcefile)
-        
+
         -- File to store the last used mode in the temp directory
         local tmpdir = os.tmpdir()
         local mode_file = path.join(tmpdir, string.format("%s.mode", filename_hash))
-        
+
         -- Function to run when dependencies change
         depend.on_changed(function ()
             -- Run shader compilation task
-            task.run("CompileShaders", {file = sourcefile})
-            
+            task.run("CompileShaders", {filename = sourcefile})
+
             -- Save current mode to file in tmp directory
             io.writefile(mode_file, current_mode or "")
         end, {
